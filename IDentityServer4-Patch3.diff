@@ -1,0 +1,379 @@
+ .../src/ConsolePrivateKeyJwtClient/Program.cs      | 68 +++++++++++++---
+ src/IdentityServer4/host/Program.cs                | 23 ++++++
+ .../host/Properties/launchSettings.json            |  2 +-
+ src/IdentityServer4/host/Startup.cs                |  4 +-
+ src/IdentityServer4/src/IdentityServer4.csproj     |  1 +
+ .../src/Services/Default/DefaultTokenService.cs    |  3 +
+ .../Default/PrivateKeyJwtSecretValidator.cs        | 95 +++++++++++++++++++++-
+ 7 files changed, 181 insertions(+), 15 deletions(-)
+
+diff --git a/samples/Clients/src/ConsolePrivateKeyJwtClient/Program.cs b/samples/Clients/src/ConsolePrivateKeyJwtClient/Program.cs
+index 4225619f..bc0149cf 100644
+--- a/samples/Clients/src/ConsolePrivateKeyJwtClient/Program.cs
++++ b/samples/Clients/src/ConsolePrivateKeyJwtClient/Program.cs
+@@ -10,6 +10,7 @@ using System.Security.Claims;
+ using System.Security.Cryptography.X509Certificates;
+ using Newtonsoft.Json.Linq;
+ using System.Threading.Tasks;
++using Newtonsoft.Json;
+ 
+ namespace ConsolePrivateKeyJwtClient
+ {
+@@ -22,15 +23,21 @@ namespace ConsolePrivateKeyJwtClient
+             Console.Title = "Console Client Credentials Flow with JWT Assertion";
+ 
+             // X.509 cert
+-            var certificate = new X509Certificate2("client.p12", "changeit");
+-            var x509Credential = new X509SigningCredentials(certificate);
++            // var certificate = new X509Certificate2("client.p12", "changeit");
++            var certificate = new X509Certificate2("Andreas_Orzelski_Chain.pfx", "i40");
++            // var x509Credential = new X509SigningCredentials(certificate);
++            X509SigningCredentials x509Credential = null;
+ 
+             var response = await RequestTokenAsync(x509Credential);
+             response.Show();
+ 
++            Console.ForegroundColor = ConsoleColor.Green;
++            Console.WriteLine("\nPress ENTER to access Aasx Server at " + baseAddress + "\n");
++            Console.ResetColor();
+             Console.ReadLine();
+             await CallServiceAsync(response.AccessToken);
+ 
++            /*
+             // RSA JsonWebkey
+             var jwk = new JsonWebKey(rsaKey);
+             response = await RequestTokenAsync(new SigningCredentials(jwk, "RS256"));
+@@ -38,6 +45,7 @@ namespace ConsolePrivateKeyJwtClient
+             
+             Console.ReadLine();
+             await CallServiceAsync(response.AccessToken);
++            */
+         }
+ 
+         static async Task<TokenResponse> RequestTokenAsync(SigningCredentials credential)
+@@ -48,11 +56,17 @@ namespace ConsolePrivateKeyJwtClient
+             if (disco.IsError) throw new Exception(disco.Error);
+ 
+             var clientToken = CreateClientToken(credential,"client.jwt", disco.TokenEndpoint);
++            // oz
++            Console.ForegroundColor = ConsoleColor.Green;
++            Console.WriteLine("\nClientToken with x5c in header: \n");
++            Console.ResetColor();
++            Console.WriteLine(clientToken + "\n");
+ 
+             var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+             {
+                 Address = disco.TokenEndpoint,
+-                Scope = "feature1",
++                // Scope = "feature1",
++                Scope = "scope1",
+ 
+                 ClientAssertion =
+                 {
+@@ -65,9 +79,11 @@ namespace ConsolePrivateKeyJwtClient
+             return response;
+         }
+ 
++        static string baseAddress = "http://localhost:51310";
++
+         static async Task CallServiceAsync(string token)
+         {
+-            var baseAddress = Constants.SampleApi;
++            // var baseAddress = Constants.SampleApi;
+ 
+             var client = new HttpClient
+             {
+@@ -75,15 +91,41 @@ namespace ConsolePrivateKeyJwtClient
+             };
+ 
+             client.SetBearerToken(token);
+-            var response = await client.GetStringAsync("identity");
++            // var response = await client.GetStringAsync("identity");
++            var response = await client.GetStringAsync("/server/listaas");
+ 
+             "\n\nService claims:".ConsoleGreen();
+-            Console.WriteLine(JArray.Parse(response));
++            // Console.WriteLine(JArray.Parse(response));
++            Console.WriteLine(response);
+         }
+ 
+         private static string CreateClientToken(SigningCredentials credential, string clientId, string audience)
+         {
+-            
++            // oz
++            string x5c = "";
++            string certFileName = "Andreas_Orzelski_Chain.pfx";
++            string password = "i40";
++
++            X509Certificate2Collection xc = new X509Certificate2Collection();
++            xc.Import(certFileName, password, X509KeyStorageFlags.PersistKeySet);
++
++            string[] X509Base64 = new string[xc.Count];
++
++            int j = xc.Count;
++            var xce = xc.GetEnumerator();
++            for (int i = 0; i < xc.Count; i++)
++            {
++                xce.MoveNext();
++                X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
++            }
++
++            x5c = JsonConvert.SerializeObject(X509Base64);
++
++            // Byte[] certFileBytes = Convert.FromBase64String(X509Base64[0]);
++            // credential = new X509SigningCredentials(new X509Certificate2(certFileBytes));
++            credential = new X509SigningCredentials(new X509Certificate2(certFileName, password));
++            // oz end
++
+             var now = DateTime.UtcNow;
+ 
+             var token = new JwtSecurityToken(
+@@ -93,12 +135,18 @@ namespace ConsolePrivateKeyJwtClient
+                     {
+                         new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
+                         new Claim(JwtClaimTypes.Subject, clientId),
+-                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64)
++                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
++                        // OZ
++                        new Claim(JwtClaimTypes.Email, "aorzelski@phoenixcontact.com")
++                        // new Claim("x5c", x5c)
+                     },
+                     now,
+                     now.AddMinutes(1),
+-                    credential
+-            );
++                    credential)
++            ;
++
++            token.Header.Add("x5c", x5c);
++            // oz
+ 
+             var tokenHandler = new JwtSecurityTokenHandler();
+             return tokenHandler.WriteToken(token);
+diff --git a/src/IdentityServer4/host/Program.cs b/src/IdentityServer4/host/Program.cs
+index 83dc9e37..8cbf1e18 100644
+--- a/src/IdentityServer4/host/Program.cs
++++ b/src/IdentityServer4/host/Program.cs
+@@ -9,6 +9,9 @@ using Serilog.Events;
+ using Serilog.Sinks.SystemConsole.Themes;
+ using System;
+ using System.Diagnostics;
++using System.Security.Cryptography.X509Certificates;
++using System.Security.Cryptography;
++using System.IO;
+ 
+ namespace Host
+ {
+@@ -16,6 +19,26 @@ namespace Host
+     {
+         public static int Main(string[] args)
+         {
++            // OZ
++            Console.WriteLine("Security 1 Startup - Server");
++            Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
++
++            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
++            root.Open(OpenFlags.ReadWrite);
++
++            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
++
++            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
++            {
++                X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
++
++                root.Add(cert);
++                Console.WriteLine("Security 1.1 Add " + f.Name);
++            }
++
++            Directory.CreateDirectory("./temp");
++            // OZ end
++
+             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+ 
+             Log.Logger = new LoggerConfiguration()
+diff --git a/src/IdentityServer4/host/Properties/launchSettings.json b/src/IdentityServer4/host/Properties/launchSettings.json
+index 641abdaa..d74d7199 100644
+--- a/src/IdentityServer4/host/Properties/launchSettings.json
++++ b/src/IdentityServer4/host/Properties/launchSettings.json
+@@ -6,7 +6,7 @@
+       "environmentVariables": {
+         "ASPNETCORE_ENVIRONMENT": "Development"
+       },
+-      "applicationUrl": "https://localhost:5001;http://localhost:5000"
++      "applicationUrl": "https://localhost:50001;http://localhost:50000"
+     },
+     "Host (proxy)": {
+       "commandName": "Project",
+diff --git a/src/IdentityServer4/host/Startup.cs b/src/IdentityServer4/host/Startup.cs
+index f80e3ba7..51138775 100644
+--- a/src/IdentityServer4/host/Startup.cs
++++ b/src/IdentityServer4/host/Startup.cs
+@@ -56,7 +56,7 @@ namespace Host
+                 iis.AuthenticationDisplayName = "Windows";
+                 iis.AutomaticAuthentication = false;
+             });
+-            
++
+             var builder = services.AddIdentityServer(options =>
+                 {
+                     options.Events.RaiseSuccessEvents = true;
+@@ -102,7 +102,7 @@ namespace Host
+                     options.AllowedCertificateTypes = CertificateTypes.All;
+                     options.RevocationMode = X509RevocationMode.NoCheck;
+                 });
+-            
++
+             services.AddCertificateForwardingForNginx();
+             
+             services.AddLocalApiAuthentication(principal =>
+diff --git a/src/IdentityServer4/src/IdentityServer4.csproj b/src/IdentityServer4/src/IdentityServer4.csproj
+index 73509188..25d74443 100644
+--- a/src/IdentityServer4/src/IdentityServer4.csproj
++++ b/src/IdentityServer4/src/IdentityServer4.csproj
+@@ -3,6 +3,7 @@
+   <PropertyGroup>
+     <PackageId>IdentityServer4</PackageId>
+     <TargetFramework>netcoreapp3.1</TargetFramework>
++    <LangVersion>8.0</LangVersion>
+     <Description>OpenID Connect and OAuth 2.0 Framework for ASP.NET Core</Description>
+     <Authors>Brock Allen;Dominick Baier</Authors>
+     <AssemblyName>IdentityServer4</AssemblyName>
+diff --git a/src/IdentityServer4/src/Services/Default/DefaultTokenService.cs b/src/IdentityServer4/src/Services/Default/DefaultTokenService.cs
+index f9021677..be4b7898 100644
+--- a/src/IdentityServer4/src/Services/Default/DefaultTokenService.cs
++++ b/src/IdentityServer4/src/Services/Default/DefaultTokenService.cs
+@@ -201,6 +201,9 @@ namespace IdentityServer4.Services
+             {
+                 claims.Add(new Claim(JwtClaimTypes.SessionId, request.ValidatedRequest.SessionId));
+             }
++            // oz
++            claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
++            claims.Add(new Claim("serverName", "identityserver.test.rsa"));
+ 
+             var issuer = ContextAccessor.HttpContext.GetIdentityServerIssuerUri();
+             var token = new Token(OidcConstants.TokenTypes.AccessToken)
+diff --git a/src/IdentityServer4/src/Validation/Default/PrivateKeyJwtSecretValidator.cs b/src/IdentityServer4/src/Validation/Default/PrivateKeyJwtSecretValidator.cs
+index 9adf13e3..11721f82 100644
+--- a/src/IdentityServer4/src/Validation/Default/PrivateKeyJwtSecretValidator.cs
++++ b/src/IdentityServer4/src/Validation/Default/PrivateKeyJwtSecretValidator.cs
+@@ -14,6 +14,13 @@ using IdentityServer4.Services;
+ using Microsoft.AspNetCore.Http;
+ using Microsoft.Extensions.Logging;
+ using Microsoft.IdentityModel.Tokens;
++using Newtonsoft.Json;
++using Newtonsoft.Json.Serialization;
++using Newtonsoft.Json.Linq;
++using System.IO;
++using System.Security.Cryptography;
++using System.Text;
++
+ 
+ namespace IdentityServer4.Validation
+ {
+@@ -80,6 +87,90 @@ namespace IdentityServer4.Validation
+                 return fail;
+             }
+ 
++            var jwtToken = new JwtSecurityToken(jwtTokenString);
++
++            // OZ
++            // var x5c = jwtToken.Payload.Claims.FirstOrDefault(c => c.Type == "x5c")?.Value;
++            // string x5c = jwtToken.Header.GetValueOrDefault("x5c");
++            Console.WriteLine("Client Token:\n" + jwtTokenString + "\n");
++
++            object o;
++            if (jwtToken.Header.TryGetValue("x5c", out o))
++            {
++                if (o is string)
++                {
++                    string x5c = o as string;
++
++                    if (x5c != null && x5c != "")
++                    {
++                        // Console.WriteLine("x5c:\n" + x5c);
++                        Console.WriteLine("Security 2.1a Server: x5c with certificate chain received");
++
++                        // parsed = JObject.Parse(Jose.JWT.Payload(token));
++                        // user = parsed.SelectToken("user").Value<string>();
++                        // string user = jwtToken.Payload.Claims.FirstOrDefault(c => c.Type == "user")?.Value;
++
++                        X509Store storeCA = new X509Store("CA", StoreLocation.CurrentUser);
++                        storeCA.Open(OpenFlags.ReadWrite);
++                        bool valid = false;
++
++                        string[] x5c64 = JsonConvert.DeserializeObject<string[]>(x5c);
++
++                        X509Certificate2Collection xcc = new X509Certificate2Collection();
++
++                        Byte[] certFileBytes = Convert.FromBase64String(x5c64[0]);
++                        /*
++                        string fileCert = "./temp/" + user + ".cer";
++                        File.WriteAllBytes(fileCert, certFileBytes);
++                        Console.WriteLine("Security 2.1b Server: " + fileCert + " received");
++                        */
++                        var x509 = new X509Certificate2(certFileBytes);
++
++                        xcc.Add(x509);
++                        Console.WriteLine("Security 2.1c Certificate in Chain: " + x509.Subject);
++
++                        StringBuilder builder = new StringBuilder();
++                        builder.AppendLine("-----BEGIN CERTIFICATE-----");
++                        builder.AppendLine(
++                            Convert.ToBase64String(x509.RawData, Base64FormattingOptions.InsertLineBreaks));
++                        builder.AppendLine("-----END CERTIFICATE-----");
++                        Console.WriteLine("Client Certificate: ");
++                        Console.WriteLine(builder);
++
++                        for (int i = 1; i < x5c64.Length; i++)
++                        {
++                            var cert = new X509Certificate2(Convert.FromBase64String(x5c64[i]));
++                            Console.WriteLine("Security 2.1c Certificate in Chain: " + cert.Subject);
++                            if (cert.Subject != cert.Issuer)
++                            {
++                                xcc.Add(cert);
++                                storeCA.Add(cert);
++                            }
++                        }
++
++                        X509Chain c = new X509Chain();
++                        c.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
++
++                        valid = c.Build(x509);
++
++                        // storeCA.RemoveRange(xcc);
++                        Console.WriteLine("Security 2.1d Server: Validate chain with root cert");
++
++                        if (!valid)
++                        {
++                            Console.WriteLine("ERROR: Certificate " + x509.Subject + " not valid!");
++                            _logger.LogError("Certificate " + x509.Subject + " not valid!");
++                            return fail;
++                        }
++
++                        var xsk = new X509SecurityKey(x509);
++                        trustedKeys = new List<SecurityKey> { xsk };
++                    }
++                }
++            }
++            // OZ end
++
++
+             var validAudiences = new[]
+             {
+                 // issuer URI (tbd)
+@@ -111,13 +202,13 @@ namespace IdentityServer4.Validation
+                 var handler = new JwtSecurityTokenHandler();
+                 handler.ValidateToken(jwtTokenString, tokenValidationParameters, out var token);
+ 
+-                var jwtToken = (JwtSecurityToken)token;
++                jwtToken = (JwtSecurityToken)token;
+                 if (jwtToken.Subject != jwtToken.Issuer)
+                 {
+                     _logger.LogError("Both 'sub' and 'iss' in the client assertion token must have a value of client_id.");
+                     return fail;
+                 }
+-                
++
+                 var exp = jwtToken.Payload.Exp;
+                 if (!exp.HasValue)
+                 {
