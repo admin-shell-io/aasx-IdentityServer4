@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace ConsolePrivateKeyJwtClient
 {
@@ -22,15 +23,21 @@ namespace ConsolePrivateKeyJwtClient
             Console.Title = "Console Client Credentials Flow with JWT Assertion";
 
             // X.509 cert
-            var certificate = new X509Certificate2("client.p12", "changeit");
-            var x509Credential = new X509SigningCredentials(certificate);
+            // var certificate = new X509Certificate2("client.p12", "changeit");
+            var certificate = new X509Certificate2("Andreas_Orzelski_Chain.pfx", "i40");
+            // var x509Credential = new X509SigningCredentials(certificate);
+            X509SigningCredentials x509Credential = null;
 
             var response = await RequestTokenAsync(x509Credential);
             response.Show();
 
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\nPress ENTER to access Aasx Server at " + baseAddress + "\n");
+            Console.ResetColor();
             Console.ReadLine();
             await CallServiceAsync(response.AccessToken);
 
+            /*
             // RSA JsonWebkey
             var jwk = new JsonWebKey(rsaKey);
             response = await RequestTokenAsync(new SigningCredentials(jwk, "RS256"));
@@ -38,6 +45,7 @@ namespace ConsolePrivateKeyJwtClient
             
             Console.ReadLine();
             await CallServiceAsync(response.AccessToken);
+            */
         }
 
         static async Task<TokenResponse> RequestTokenAsync(SigningCredentials credential)
@@ -48,11 +56,17 @@ namespace ConsolePrivateKeyJwtClient
             if (disco.IsError) throw new Exception(disco.Error);
 
             var clientToken = CreateClientToken(credential,"client.jwt", disco.TokenEndpoint);
+            // oz
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\nClientToken with x5c in header: \n");
+            Console.ResetColor();
+            Console.WriteLine(clientToken + "\n");
 
             var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = disco.TokenEndpoint,
-                Scope = "feature1",
+                // Scope = "feature1",
+                Scope = "scope1",
 
                 ClientAssertion =
                 {
@@ -65,9 +79,11 @@ namespace ConsolePrivateKeyJwtClient
             return response;
         }
 
+        static string baseAddress = "http://localhost:51310";
+
         static async Task CallServiceAsync(string token)
         {
-            var baseAddress = Constants.SampleApi;
+            // var baseAddress = Constants.SampleApi;
 
             var client = new HttpClient
             {
@@ -75,15 +91,41 @@ namespace ConsolePrivateKeyJwtClient
             };
 
             client.SetBearerToken(token);
-            var response = await client.GetStringAsync("identity");
+            // var response = await client.GetStringAsync("identity");
+            var response = await client.GetStringAsync("/server/listaas");
 
             "\n\nService claims:".ConsoleGreen();
-            Console.WriteLine(JArray.Parse(response));
+            // Console.WriteLine(JArray.Parse(response));
+            Console.WriteLine(response);
         }
 
         private static string CreateClientToken(SigningCredentials credential, string clientId, string audience)
         {
-            
+            // oz
+            string x5c = "";
+            string certFileName = "Andreas_Orzelski_Chain.pfx";
+            string password = "i40";
+
+            X509Certificate2Collection xc = new X509Certificate2Collection();
+            xc.Import(certFileName, password, X509KeyStorageFlags.PersistKeySet);
+
+            string[] X509Base64 = new string[xc.Count];
+
+            int j = xc.Count;
+            var xce = xc.GetEnumerator();
+            for (int i = 0; i < xc.Count; i++)
+            {
+                xce.MoveNext();
+                X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+            }
+
+            x5c = JsonConvert.SerializeObject(X509Base64);
+
+            // Byte[] certFileBytes = Convert.FromBase64String(X509Base64[0]);
+            // credential = new X509SigningCredentials(new X509Certificate2(certFileBytes));
+            credential = new X509SigningCredentials(new X509Certificate2(certFileName, password));
+            // oz end
+
             var now = DateTime.UtcNow;
 
             var token = new JwtSecurityToken(
@@ -93,12 +135,18 @@ namespace ConsolePrivateKeyJwtClient
                     {
                         new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
                         new Claim(JwtClaimTypes.Subject, clientId),
-                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64)
+                        new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
+                        // OZ
+                        new Claim(JwtClaimTypes.Email, "aorzelski@phoenixcontact.com")
+                        // new Claim("x5c", x5c)
                     },
                     now,
                     now.AddMinutes(1),
-                    credential
-            );
+                    credential)
+            ;
+
+            token.Header.Add("x5c", x5c);
+            // oz
 
             var tokenHandler = new JwtSecurityTokenHandler();
             return tokenHandler.WriteToken(token);

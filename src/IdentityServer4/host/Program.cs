@@ -9,6 +9,9 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
+using System.IO;
 
 namespace Host
 {
@@ -16,6 +19,26 @@ namespace Host
     {
         public static int Main(string[] args)
         {
+            // OZ
+            Console.WriteLine("Security 1 Startup - Server");
+            Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
+
+            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
+            root.Open(OpenFlags.ReadWrite);
+
+            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
+
+            foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+            {
+                X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+
+                root.Add(cert);
+                Console.WriteLine("Security 1.1 Add " + f.Name);
+            }
+
+            Directory.CreateDirectory("./temp");
+            // OZ end
+
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
             Log.Logger = new LoggerConfiguration()

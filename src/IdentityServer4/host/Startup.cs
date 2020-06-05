@@ -56,7 +56,7 @@ namespace Host
                 iis.AuthenticationDisplayName = "Windows";
                 iis.AutomaticAuthentication = false;
             });
-            
+
             var builder = services.AddIdentityServer(options =>
                 {
                     options.Events.RaiseSuccessEvents = true;
@@ -102,7 +102,7 @@ namespace Host
                     options.AllowedCertificateTypes = CertificateTypes.All;
                     options.RevocationMode = X509RevocationMode.NoCheck;
                 });
-            
+
             services.AddCertificateForwardingForNginx();
             
             services.AddLocalApiAuthentication(principal =>
