@@ -201,6 +201,9 @@ namespace IdentityServer4.Services
             {
                 claims.Add(new Claim(JwtClaimTypes.SessionId, request.ValidatedRequest.SessionId));
             }
+            // oz
+            claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
+            claims.Add(new Claim("serverName", "identityserver.test.rsa"));
 
             var issuer = ContextAccessor.HttpContext.GetIdentityServerIssuerUri();
             var token = new Token(OidcConstants.TokenTypes.AccessToken)

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <PackageId>IdentityServer4</PackageId>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>8.0</LangVersion>
     <Description>OpenID Connect and OAuth 2.0 Framework for ASP.NET Core</Description>
     <Authors>Brock Allen;Dominick Baier</Authors>
     <AssemblyName>IdentityServer4</AssemblyName>

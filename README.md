@@ -1,3 +1,8 @@
+(This is a patched version of the IdentityServer4 at 128464a8b372ba4a8534faf066e5268f1062b180. 
+We needed to add certain features for demonstrations of aasx-\* toolset. This version
+of IdentityServer4 *SHOULD NOT* be used for any other purposes. In particular, it is not 
+actively maintained nor did we properly review or test the code.)
+
 ## About IdentityServer4
 [<img align="right" width="100px" src="https://dotnetfoundation.org/img/logo_big.svg" />](https://dotnetfoundation.org/projects?searchquery=IdentityServer&type=project)
 
