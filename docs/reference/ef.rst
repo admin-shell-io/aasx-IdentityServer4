@@ -5,7 +5,7 @@ Entity Framework Support
 An EntityFramework-based implementation is provided for the configuration and operational data extensibility points in IdentityServer.
 The use of EntityFramework allows any EF-supported database to be used with this library.
 
-The code for this library is located `here <https://github.com/IdentityServer/IdentityServer4/tree/master/src/EntityFramework>`_ (with the underlying storage code `here <https://github.com/IdentityServer/IdentityServer4/tree/master/src/EntityFramework.Storage>`_) and the NuGet package is `here <https://www.nuget.org/packages/IdentityServer4.EntityFramework>`_.
+The code for this library is located `here <https://github.com/IdentityServer/IdentityServer4/tree/main/src/EntityFramework>`_ (with the underlying storage code `here <https://github.com/IdentityServer/IdentityServer4/tree/main/src/EntityFramework.Storage>`_) and the NuGet package is `here <https://www.nuget.org/packages/IdentityServer4.EntityFramework>`_.
 
 The features provided by this library are broken down into two main areas: configuration store and operational store support.
 These two different areas can be used independently or together, based upon the needs of the hosting application.
@@ -55,11 +55,10 @@ If you need to change the schema for the Migration History Table, you can chain 
         b.UseSqlServer(connectionString,
             sql => sql.MigrationsAssembly(migrationsAssembly).MigrationsHistoryTable("MyConfigurationMigrationTable", "myConfigurationSchema"));
 
-Operational Store support for authorization grants, consents, and tokens (refresh and reference)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Operational Store support for persisted grants
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If authorization grants, consents, and tokens (refresh and reference) are desired to be loaded from a EF-supported database 
-(rather than the default in-memory database), then the operational store can be used.
+If :ref:`persisted grants <refPersistedGrants>` are desired to be loaded from a EF-supported database (rather than the default in-memory database), then the operational store can be used.
 This support provides implementations of the ``IPersistedGrantStore`` extensibility point.
 The implementation uses a ``DbContext``-derived class called ``PersistedGrantDbContext`` to model the table in the database.
 
@@ -96,10 +95,11 @@ This options class contains properties to control the operational store and ``Pe
 ``DefaultSchema``
     Allows setting the default database schema name for all the tables in the ``PersistedGrantDbContext``.
 ``EnableTokenCleanup``
-    Indicates whether stale entries will be automatically cleaned up from the database. The default is ``false``.
+    Indicates whether expired grants will be automatically cleaned up from the database. The default is ``false``.
 ``TokenCleanupInterval``
     The token cleanup interval (in seconds). The default is 3600 (1 hour).
 
+.. note:: The token cleanup feature does *not* remove persisted grants that are *consumed* (see :ref:`persisted grants <refPersistedGrants>`).
 
 Database creation and schema changes across different versions of IdentityServer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -112,4 +112,4 @@ You are expected to manage the database creation, schema changes, and data migra
 Using EF migrations is one possible approach to this. 
 If you do wish to use migrations, then see the :ref:`EF quickstart <refEntityFrameworkQuickstart>` for samples on how to get started, or consult the Microsoft `documentation on EF migrations <https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/index>`_.
 
-We also publish `sample SQL scripts <https://github.com/IdentityServer/IdentityServer4/tree/master/src/EntityFramework.Storage/migrations/SqlServer/Migrations>`_ for the current version of the database schema.
+We also publish `sample SQL scripts <https://github.com/IdentityServer/IdentityServer4/tree/main/src/EntityFramework.Storage/migrations/SqlServer/Migrations>`_ for the current version of the database schema.

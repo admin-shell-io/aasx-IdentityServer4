@@ -1,11 +1,11 @@
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using IdentityServer4.Models;
-using IdentityServer4.Services;
 using IdentityServer4.Test;
 using Microsoft.Extensions.Logging;
 
-namespace Host.Extensions
+namespace IdentityServerHost.Extensions
 {
     public class HostProfileService : TestUserProfileService
     {
@@ -17,16 +17,11 @@ namespace Host.Extensions
         {
             await base.GetProfileDataAsync(context);
 
-            var transaction = context.RequestedResources.ParsedScopes.FirstOrDefault(x => x.Name == "transaction");
-            if (transaction != null)
+            var transaction = context.RequestedResources.ParsedScopes.FirstOrDefault(x => x.ParsedName == "transaction");
+            if (transaction?.ParsedParameter != null)
             {
-                context.IssuedClaims.Add(new System.Security.Claims.Claim("transaction", transaction.ParameterValue));
+                context.IssuedClaims.Add(new Claim("transaction_id", transaction.ParsedParameter));
             }
-        }
-
-        public override Task IsActiveAsync(IsActiveContext context)
-        {
-            return base.IsActiveAsync(context);
         }
     }
 }

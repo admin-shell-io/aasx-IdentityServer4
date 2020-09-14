@@ -3,10 +3,9 @@
 
 
 using System;
-using Host.Configuration;
+using IdentityServerHost.Configuration;
 using IdentityModel;
 using IdentityServer4;
-using IdentityServer4.Quickstart.UI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,12 +17,12 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using Host.Extensions;
+using IdentityServerHost.Extensions;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.HttpOverrides;
-using IdentityServer4.Validation;
+using IdentityServerHost.Quickstart.UI;
 
-namespace Host
+namespace IdentityServerHost
 {
     public class Startup
     {
@@ -43,20 +42,6 @@ namespace Host
             // cookie policy to deal with temporary browser incompatibilities
             services.AddSameSiteCookiePolicy();
 
-            // configures IIS out-of-proc settings (see https://github.com/aspnet/AspNetCore/issues/14882)
-            services.Configure<IISOptions>(iis =>
-            {
-                iis.AuthenticationDisplayName = "Windows";
-                iis.AutomaticAuthentication = false;
-            });
-
-            // configures IIS in-proc settings
-            services.Configure<IISServerOptions>(iis =>
-            {
-                iis.AuthenticationDisplayName = "Windows";
-                iis.AutomaticAuthentication = false;
-            });
-
             var builder = services.AddIdentityServer(options =>
                 {
                     options.Events.RaiseSuccessEvents = true;
@@ -64,15 +49,16 @@ namespace Host
                     options.Events.RaiseErrorEvents = true;
                     options.Events.RaiseInformationEvents = true;
 
+                    options.EmitScopesAsSpaceDelimitedStringInJwt = true;
+
                     options.MutualTls.Enabled = true;
                     options.MutualTls.DomainName = "mtls";
                     //options.MutualTls.AlwaysEmitConfirmationClaim = true;
                 })
                 .AddInMemoryClients(Clients.Get())
-                //.AddInMemoryClients(_config.GetSection("Clients"))
                 .AddInMemoryIdentityResources(Resources.IdentityResources)
-                .AddInMemoryApiResources(Resources.ApiResources)
                 .AddInMemoryApiScopes(Resources.ApiScopes)
+                .AddInMemoryApiResources(Resources.ApiResources)
                 .AddSigningCredential()
                 .AddExtensionGrantValidator<Extensions.ExtensionGrantValidator>()
                 .AddExtensionGrantValidator<Extensions.NoSubjectExtensionGrantValidator>()
@@ -80,10 +66,10 @@ namespace Host
                 .AddAppAuthRedirectUriValidator()
                 .AddTestUsers(TestUsers.Users)
                 .AddProfileService<HostProfileService>()
+                .AddCustomTokenRequestValidator<ParameterizedScopeTokenRequestValidator>()
+                .AddScopeParser<ParameterizedScopeParser>()
                 .AddMutualTlsSecretValidators();
 
-            services.AddTransient<IResourceValidator, CustomResourceValidator>();
-            
             // use this for persisted grants store
             // var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             // const string connectionString = "DataSource=identityserver.db";
@@ -204,7 +190,7 @@ namespace Host
                     options.SignOutScheme = IdentityServerConstants.SignoutScheme;
 
                     options.Authority = "https://demo.identityserver.io/";
-                    options.ClientId = "implicit";
+                    options.ClientId = "login";
                     options.ResponseType = "id_token";
                     options.SaveTokens = true;
                     options.CallbackPath = "/signin-idsrv";

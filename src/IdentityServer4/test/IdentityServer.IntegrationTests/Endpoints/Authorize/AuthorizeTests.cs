@@ -685,7 +685,7 @@ namespace IdentityServer.IntegrationTests.Endpoints.Authorize
             await _mockPipeline.BrowserClient.GetAsync(url);
 
             _mockPipeline.ErrorWasCalled.Should().BeTrue();
-            _mockPipeline.ErrorMessage.Error.Should().Be(OidcConstants.AuthorizeErrors.UnsupportedResponseType);
+            _mockPipeline.ErrorMessage.Error.Should().Be(OidcConstants.AuthorizeErrors.InvalidRequest);
             _mockPipeline.ErrorMessage.ErrorDescription.Should().Contain("response_mode");
         }
 
@@ -1136,6 +1136,27 @@ namespace IdentityServer.IntegrationTests.Endpoints.Authorize
                 nonce: "123_nonce");
 
             var response = await _mockPipeline.BrowserClient.GetAsync(url);
+            _mockPipeline.LoginWasCalled.Should().BeTrue();
+        }
+
+
+        [Fact]
+        [Trait("Category", Category)]
+        public async Task prompt_login_should_show_login_page()
+        {
+            await _mockPipeline.LoginAsync("bob");
+
+            var url = _mockPipeline.CreateAuthorizeUrl(
+                clientId: "client3",
+                responseType: "id_token",
+                scope: "openid profile",
+                redirectUri: "https://client3/callback",
+                state: "123_state",
+                nonce: "123_nonce",
+                extra:new { prompt = "login" }
+            );
+            var response = await _mockPipeline.BrowserClient.GetAsync(url);
+
             _mockPipeline.LoginWasCalled.Should().BeTrue();
         }
     }

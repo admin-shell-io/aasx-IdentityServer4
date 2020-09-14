@@ -13,13 +13,14 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.IO;
 
-namespace Host
+namespace IdentityServerHost
 {
     public class Program
     {
         public static int Main(string[] args)
         {
-            // OZ
+            Console.Title = "IdentityServer4";
+			// OZ
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
 
@@ -77,7 +78,7 @@ namespace Host
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
+            Host.CreateDefaultBuilder(args)
                 .UseSerilog()
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

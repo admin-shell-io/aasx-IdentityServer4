@@ -15,7 +15,7 @@ To move this data into a database that is persistent between restarts and across
 
 IdentityServer4.EntityFramework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``IdentityServer4.EntityFramework`` implements the required stores and services using the following DbContext’s:
+``IdentityServer4.EntityFramework`` implements the required stores and services using the following DbContexts:
 
     * ConfigurationDbContext - used for configuration data such as clients, resources, and scopes
     * PersistedGrantDbContext - used for temporary operational data such as authorization codes, and refresh tokens
@@ -39,23 +39,23 @@ To add SQL Server support to our IdentityServer project, you’ll need the follo
 Database Schema Changes and Using EF Migrations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``IdentityServer4.EntityFramework.Storage`` package contains entity classes that map from IdentityServer’s models
+The ``IdentityServer4.EntityFramework.Storage`` package contains entity classes that map from IdentityServer’s models.
 As IdentityServer’s models change, so will the entity classes in ``IdentityServer4.EntityFramework.Storage``.
 As you use ``IdentityServer4.EntityFramework.Storage`` and upgrade over time, you are responsible for your database schema and changes necessary to that schema as the entity classes change.
 One approach for managing those changes is to use `EF migrations <https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/index>`_, which is what we’ll use in this quickstart.
 If migrations are not your preference, then you can manage the schema changes in any way you see fit.
 
-.. Note:: You can find the `latest SQL scripts <https://github.com/IdentityServer/IdentityServer4/tree/master/src/EntityFramework.Storage/migrations/SqlServer/Migrations>`_ for SqlServer in the IdentityServer4.EntityFramework.Storage repository.
+.. Note:: You can find the `latest SQL scripts <https://github.com/IdentityServer/IdentityServer4/tree/main/src/EntityFramework.Storage/migrations/SqlServer/Migrations>`_ for SqlServer in the IdentityServer4.EntityFramework.Storage repository.
 
 Configuring the Stores
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To start using these stores, you’ll need to replace any existing calls to ``AddInMemoryClients``, ``AddInMemoryIdentityResources``, ``AddInMemoryApiResources``, and ``AddInMemoryPersistedGrants`` in your ``ConfigureServices`` method in `Startup.cs` with ``AddConfigurationStore`` and ``AddOperationalStore``.
+To start using these stores, you’ll need to replace any existing calls to ``AddInMemoryClients``, ``AddInMemoryIdentityResources``, ``AddInMemoryApiScopes``, ``AddInMemoryApiResources``, and ``AddInMemoryPersistedGrants`` in your ``ConfigureServices`` method in `Startup.cs` with ``AddConfigurationStore`` and ``AddOperationalStore``.
 
 These methods each require a ``DbContextOptionsBuilder``, meaning your code will look something like this::
 
     var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-    const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-3.0.0;trusted_connection=yes;";
+    const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-4.0.0;trusted_connection=yes;";
 
     services.AddIdentityServer()
         .AddTestUsers(TestUsers.Users)
@@ -125,7 +125,7 @@ In `Startup.cs` add this method to help initialize the database::
 
             if (!context.IdentityResources.Any())
             {
-                foreach (var resource in Config.Ids)
+                foreach (var resource in Config.IdentityResources)
                 {
                     context.IdentityResources.Add(resource.ToEntity());
                 }

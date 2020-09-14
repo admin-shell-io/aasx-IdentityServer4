@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using IdentityServer4.Configuration;
 
 namespace IdentityServer4.Extensions
 {
@@ -25,11 +26,12 @@ namespace IdentityServer4.Extensions
         /// </summary>
         /// <param name="token">The token.</param>
         /// <param name="clock">The clock.</param>
+        /// <param name="options">The options</param>
         /// <param name="logger">The logger.</param>
         /// <returns></returns>
         /// <exception cref="Exception">
         /// </exception>
-        public static JwtPayload CreateJwtPayload(this Token token, ISystemClock clock, ILogger logger)
+        public static JwtPayload CreateJwtPayload(this Token token, ISystemClock clock, IdentityServerOptions options, ILogger logger)
         {
             var payload = new JwtPayload(
                 token.Issuer,
@@ -64,7 +66,15 @@ namespace IdentityServer4.Extensions
             if (!scopeClaims.IsNullOrEmpty())
             {
                 var scopeValues = scopeClaims.Select(x => x.Value).ToArray();
-                payload.Add(JwtClaimTypes.Scope, scopeValues);
+
+                if (options.EmitScopesAsSpaceDelimitedStringInJwt)
+                {
+                    payload.Add(JwtClaimTypes.Scope, string.Join(" ", scopeValues));
+                }
+                else
+                {
+                    payload.Add(JwtClaimTypes.Scope, scopeValues);
+                }
             }
 
             // amr claims
@@ -87,7 +97,7 @@ namespace IdentityServer4.Extensions
                 {
                     if (payload.ContainsKey(group.Key))
                     {
-                        throw new Exception($"Can't add two claims where one is a JSON object and the other is not a JSON object ({@group.Key})");
+                        throw new Exception($"Can't add two claims where one is a JSON object and the other is not a JSON object ({group.Key})");
                     }
 
                     if (group.Skip(1).Any())
@@ -109,7 +119,7 @@ namespace IdentityServer4.Extensions
                     if (payload.ContainsKey(group.Key))
                     {
                         throw new Exception(
-                            $"Can't add two claims where one is a JSON array and the other is not a JSON array ({@group.Key})");
+                            $"Can't add two claims where one is a JSON array and the other is not a JSON array ({group.Key})");
                     }
 
                     var newArr = new List<JToken>();

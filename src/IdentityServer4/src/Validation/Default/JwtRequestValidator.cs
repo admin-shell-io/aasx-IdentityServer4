@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityModel;
+using IdentityServer4.Configuration;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +30,7 @@ namespace IdentityServer4.Validation
         /// <summary>
         /// JWT handler
         /// </summary>
-        protected JwtSecurityTokenHandler Handler = new JwtSecurityTokenHandler()
+        protected JwtSecurityTokenHandler Handler = new JwtSecurityTokenHandler
         {
             MapInboundClaims = false
         };
@@ -45,10 +46,8 @@ namespace IdentityServer4.Validation
                 {
                     return _audienceUri;
                 }
-                else
-                {
-                    return _httpContextAccessor.HttpContext.GetIdentityServerIssuerUri();
-                }
+
+                return _httpContextAccessor.HttpContext.GetIdentityServerIssuerUri();
             }
         }
 
@@ -56,13 +55,20 @@ namespace IdentityServer4.Validation
         /// The logger
         /// </summary>
         protected readonly ILogger Logger;
+        
+        /// <summary>
+        /// The optione
+        /// </summary>
+        protected readonly IdentityServerOptions Options;
 
         /// <summary>
         /// Instantiates an instance of private_key_jwt secret validator
         /// </summary>
-        public JwtRequestValidator(IHttpContextAccessor contextAccessor, ILogger<JwtRequestValidator> logger)
+        public JwtRequestValidator(IHttpContextAccessor contextAccessor, IdentityServerOptions options, ILogger<JwtRequestValidator> logger)
         {
             _httpContextAccessor = contextAccessor;
+            
+            Options = options;
             Logger = logger;
         }
 
@@ -136,19 +142,6 @@ namespace IdentityServer4.Validation
         }
 
         /// <summary>
-        /// Tries to extract client_id from JWT request
-        /// </summary>
-        /// <param name="jwtRequest"></param>
-        /// <returns></returns>
-        public virtual Task<string> LoadClientId(string jwtRequest)
-        {
-            var token = Handler.ReadJwtToken(jwtRequest);
-
-            return Task.FromResult(token.Payload.Claims
-                .FirstOrDefault(c => c.Type == OidcConstants.AuthorizeRequest.ClientId)?.Value);
-        }
-
-        /// <summary>
         /// Retrieves keys for a given client
         /// </summary>
         /// <param name="client">The client</param>
@@ -182,8 +175,13 @@ namespace IdentityServer4.Validation
                 RequireExpirationTime = true
             };
 
-            Handler.ValidateToken(jwtTokenString, tokenValidationParameters, out var token);
+            if (Options.StrictJarValidation)
+            {
+                tokenValidationParameters.ValidTypes = new[] { JwtClaimTypes.JwtTypes.AuthorizationRequest };
+            }
 
+            Handler.ValidateToken(jwtTokenString, tokenValidationParameters, out var token);
+            
             return Task.FromResult((JwtSecurityToken)token);
         }
 
@@ -202,17 +200,17 @@ namespace IdentityServer4.Validation
                 {
                     var value = token.Payload[key];
 
-                    if (value is string s)
+                    switch (value)
                     {
-                        payload.Add(key, s);
-                    }
-                    else if (value is JObject jobj)
-                    {
-                        payload.Add(key, jobj.ToString(Formatting.None));
-                    }
-                    else if (value is JArray jarr)
-                    {
-                        payload.Add(key, jarr.ToString(Formatting.None));
+                        case string s:
+                            payload.Add(key, s);
+                            break;
+                        case JObject jobj:
+                            payload.Add(key, jobj.ToString(Formatting.None));
+                            break;
+                        case JArray jarr:
+                            payload.Add(key, jarr.ToString(Formatting.None));
+                            break;
                     }
                 }
             }

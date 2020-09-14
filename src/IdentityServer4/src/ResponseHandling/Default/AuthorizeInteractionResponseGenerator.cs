@@ -75,11 +75,14 @@ namespace IdentityServer4.ResponseHandling
                 // special case when anonymous user has issued an error prior to authenticating
                 Logger.LogInformation("Error: User consent result: {error}", consent.Error);
 
-                var error = consent.Error == AuthorizationError.AccountSelectionRequired ? OidcConstants.AuthorizeErrors.AccountSelectionRequired :
-                    consent.Error == AuthorizationError.ConsentRequired ? OidcConstants.AuthorizeErrors.ConsentRequired :
-                    consent.Error == AuthorizationError.InteractionRequired ? OidcConstants.AuthorizeErrors.InteractionRequired :
-                    consent.Error == AuthorizationError.LoginRequired ? OidcConstants.AuthorizeErrors.LoginRequired : 
-                        OidcConstants.AuthorizeErrors.AccessDenied;
+                var error = consent.Error switch
+                {
+                    AuthorizationError.AccountSelectionRequired => OidcConstants.AuthorizeErrors.AccountSelectionRequired,
+                    AuthorizationError.ConsentRequired => OidcConstants.AuthorizeErrors.ConsentRequired,
+                    AuthorizationError.InteractionRequired => OidcConstants.AuthorizeErrors.InteractionRequired,
+                    AuthorizationError.LoginRequired => OidcConstants.AuthorizeErrors.LoginRequired,
+                    _ => OidcConstants.AuthorizeErrors.AccessDenied
+                };
                 
                 return new InteractionResponse
                 {
@@ -89,12 +92,23 @@ namespace IdentityServer4.ResponseHandling
             }
 
             var result = await ProcessLoginAsync(request);
-            if (result.IsLogin || result.IsError)
+            
+            if (!result.IsLogin && !result.IsError && !result.IsRedirect)
             {
-                return result;
+                result = await ProcessConsentAsync(request, consent);
             }
 
-            result = await ProcessConsentAsync(request, consent);
+            if ((result.IsLogin || result.IsConsent || result.IsRedirect) && request.PromptModes.Contains(OidcConstants.PromptModes.None))
+            {
+                // prompt=none means do not show the UI
+                Logger.LogInformation("Changing response to LoginRequired: prompt=none was requested");
+                result = new InteractionResponse
+                {
+                    Error = result.IsLogin ? OidcConstants.AuthorizeErrors.LoginRequired :
+                                result.IsConsent ? OidcConstants.AuthorizeErrors.ConsentRequired : 
+                                    OidcConstants.AuthorizeErrors.InteractionRequired
+                };
+            }
 
             return result;
         }
@@ -134,24 +148,6 @@ namespace IdentityServer4.ResponseHandling
 
             if (!isAuthenticated || !isActive)
             {
-                // prompt=none means user must be signed in already
-                if (request.PromptModes.Contains(OidcConstants.PromptModes.None))
-                {
-                    if (!isAuthenticated)
-                    {
-                        Logger.LogInformation("Showing error: prompt=none was requested but user is not authenticated");
-                    }
-                    else if (!isActive)
-                    {
-                        Logger.LogInformation("Showing error: prompt=none was requested but user is not active");
-                    }
-
-                    return new InteractionResponse
-                    {
-                        Error = OidcConstants.AuthorizeErrors.LoginRequired
-                    };
-                }
-
                 if (!isAuthenticated)
                 {
                     Logger.LogInformation("Showing login: User is not authenticated");
@@ -280,12 +276,15 @@ namespace IdentityServer4.ResponseHandling
                         // build error to return to client
                         Logger.LogInformation("Error: User consent result: {error}", consent.Error);
 
-                        var error = consent.Error == AuthorizationError.AccountSelectionRequired ? OidcConstants.AuthorizeErrors.AccountSelectionRequired :
-                            consent.Error == AuthorizationError.ConsentRequired ? OidcConstants.AuthorizeErrors.ConsentRequired :
-                            consent.Error == AuthorizationError.InteractionRequired ? OidcConstants.AuthorizeErrors.InteractionRequired :
-                            consent.Error == AuthorizationError.LoginRequired ? OidcConstants.AuthorizeErrors.LoginRequired :
-                                OidcConstants.AuthorizeErrors.AccessDenied;
-
+                        var error = consent.Error switch
+                        {
+                            AuthorizationError.AccountSelectionRequired => OidcConstants.AuthorizeErrors.AccountSelectionRequired,
+                            AuthorizationError.ConsentRequired => OidcConstants.AuthorizeErrors.ConsentRequired,
+                            AuthorizationError.InteractionRequired => OidcConstants.AuthorizeErrors.InteractionRequired,
+                            AuthorizationError.LoginRequired => OidcConstants.AuthorizeErrors.LoginRequired,
+                            _ => OidcConstants.AuthorizeErrors.AccessDenied
+                        };
+                        
                         response.Error = error;
                         response.ErrorDescription = consent.ErrorDescription;
                     }
@@ -313,7 +312,7 @@ namespace IdentityServer4.ResponseHandling
                                 if (consent.RememberConsent)
                                 {
                                     // remember what user actually selected
-                                    scopes = request.ValidatedResources.ScopeValues;
+                                    scopes = request.ValidatedResources.RawScopeValues;
                                     Logger.LogDebug("User indicated to remember consent for scopes: {scopes}", scopes);
                                 }
 

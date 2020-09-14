@@ -1,11 +1,12 @@
 // Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+
 using System.Collections.Generic;
 using IdentityServer4;
 using IdentityServer4.Models;
 
-namespace Host.Configuration
+namespace IdentityServerHost.Configuration
 {
     public static class ClientsConsole
     {
@@ -13,20 +14,29 @@ namespace Host.Configuration
         {
             return new List<Client>
             {
-                ///////////////////////////////////////////////////////////////
-                // Console-based Client
-                ///////////////////////////////////////////////////////////////
-
-
                 ///////////////////////////////////////////
                 // Console Client Credentials Flow Sample
                 //////////////////////////////////////////
                 new Client
                 {
                     ClientId = "client",
-                    ClientSecrets = {new Secret("secret".Sha256())},
+                    ClientSecrets = { new Secret("secret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    AllowedScopes = { "scope1", "scope2", IdentityServerConstants.LocalApi.ScopeName}
+                    AllowedScopes =
+                    {
+                        "resource1.scope1", "resource2.scope1", IdentityServerConstants.LocalApi.ScopeName
+                    }
+                },
+
+                ///////////////////////////////////////////
+                // Console Structured Scope Sample
+                //////////////////////////////////////////
+                new Client
+                {
+                    ClientId = "parameterized.client",
+                    ClientSecrets = { new Secret("secret".Sha256()) },
+                    AllowedGrantTypes = GrantTypes.ClientCredentials,
+                    AllowedScopes = { "transaction" }
                 },
 
                 ///////////////////////////////////////////
@@ -48,7 +58,7 @@ namespace Host.Configuration
                     },
                     AccessTokenType = AccessTokenType.Jwt,
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    AllowedScopes = { "scope1", "scope2" }
+                    AllowedScopes = { "resource1.scope1", "resource2.scope1" }
                 },
 
                 ///////////////////////////////////////////
@@ -73,7 +83,7 @@ namespace Host.Configuration
                         }
                     },
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    AllowedScopes = { "scope1", "scope2" }
+                    AllowedScopes = { "resource1.scope1", "resource2.scope1" }
                 },
 
                 ///////////////////////////////////////////
@@ -82,9 +92,9 @@ namespace Host.Configuration
                 new Client
                 {
                     ClientId = "client.custom",
-                    ClientSecrets = {new Secret("secret".Sha256())},
-                    AllowedGrantTypes = {"custom", "custom.nosubject"},
-                    AllowedScopes = { "scope1", "scope2" }
+                    ClientSecrets = { new Secret("secret".Sha256()) },
+                    AllowedGrantTypes = { "custom", "custom.nosubject" },
+                    AllowedScopes = { "resource1.scope1", "resource2.scope1" }
                 },
 
                 ///////////////////////////////////////////
@@ -93,15 +103,21 @@ namespace Host.Configuration
                 new Client
                 {
                     ClientId = "roclient",
-                    ClientSecrets = {new Secret("secret".Sha256())},
+                    ClientSecrets = { new Secret("secret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
                     AllowOfflineAccess = true,
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         "custom.profile",
-                        "scope1", "scope2"
-                    }
+                        "resource1.scope1",
+                        "resource2.scope1"
+                    },
+                    
+                    RefreshTokenUsage = TokenUsage.OneTimeOnly,
+                    AbsoluteRefreshTokenLifetime = 3600 * 24,
+                    SlidingRefreshTokenLifetime = 10,
+                    RefreshTokenExpiration = TokenExpiration.Sliding
                 },
 
                 ///////////////////////////////////////////
@@ -117,7 +133,8 @@ namespace Host.Configuration
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Email,
-                        "scope1", "scope2"
+                        "resource1.scope1",
+                        "resource2.scope1"
                     }
                 },
 
@@ -131,14 +148,15 @@ namespace Host.Configuration
                     RequireClientSecret = false,
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
-                    RedirectUris = {"http://127.0.0.1"},
+                    RedirectUris = { "http://127.0.0.1" },
                     AllowOfflineAccess = true,
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
-                        "scope1", "scope2"
+                        "resource1.scope1",
+                        "resource2.scope1"
                     }
                 },
                 ///////////////////////////////////////////
@@ -151,16 +169,17 @@ namespace Host.Configuration
                     RequireClientSecret = false,
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
-                    RedirectUris = {"sample-windows-client://callback"},
+                    RedirectUris = { "sample-windows-client://callback" },
                     RequireConsent = false,
                     AllowOfflineAccess = true,
-                    AllowedIdentityTokenSigningAlgorithms = {"ES256"},
+                    AllowedIdentityTokenSigningAlgorithms = { "ES256" },
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
-                        "scope1", "scope2"
+                        "resource1.scope1",
+                        "resource2.scope1"
                     }
                 },
 
@@ -171,12 +190,12 @@ namespace Host.Configuration
                 new Client
                 {
                     ClientId = "roclient.reference",
-                    ClientSecrets = {new Secret("secret".Sha256())},
+                    ClientSecrets = { new Secret("secret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
-                    AllowedScopes = {"scope1", "scope2"},
+                    AllowedScopes = { "resource1.scope1", "resource2.scope1", "scope3" },
                     AccessTokenType = AccessTokenType.Reference
                 },
-                
+
                 ///////////////////////////////////////////
                 // Device Flow Sample
                 //////////////////////////////////////////
@@ -184,18 +203,16 @@ namespace Host.Configuration
                 {
                     ClientId = "device",
                     ClientName = "Device Flow Client",
-
                     AllowedGrantTypes = GrantTypes.DeviceFlow,
                     RequireClientSecret = false,
-
                     AllowOfflineAccess = true,
-
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
-                        "scope1", "scope2"
+                        "resource1.scope1",
+                        "resource2.scope1"
                     }
                 }
             };

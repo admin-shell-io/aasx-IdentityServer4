@@ -5,10 +5,20 @@ using System.Collections.Generic;
 using IdentityServer4;
 using IdentityServer4.Models;
 
-namespace Host.Configuration
+namespace IdentityServerHost.Configuration
 {
     public static class ClientsWeb
     {
+        static string[] allowedScopes = 
+        {
+            IdentityServerConstants.StandardScopes.OpenId,
+            IdentityServerConstants.StandardScopes.Profile,
+            IdentityServerConstants.StandardScopes.Email,
+            "resource1.scope1", 
+            "resource2.scope1",
+            "transaction"
+        };
+        
         public static IEnumerable<Client> Get()
         {
             return new List<Client>
@@ -36,13 +46,7 @@ namespace Host.Configuration
                     PostLogoutRedirectUris = { "https://localhost:44300/index.html" },
                     AllowedCorsOrigins = { "https://localhost:44300" },
 
-                    AllowedScopes =
-                    {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Email,
-                        "feature1", "feature2"
-                    }
+                    AllowedScopes = allowedScopes
                 },
                 
                 ///////////////////////////////////////////
@@ -68,13 +72,7 @@ namespace Host.Configuration
 
                     AllowOfflineAccess = true,
 
-                    AllowedScopes =
-                    {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Email,
-                        "feature1", "feature2"
-                    }
+                    AllowedScopes = allowedScopes
                 },
                 
                 ///////////////////////////////////////////
@@ -100,14 +98,7 @@ namespace Host.Configuration
 
                     AllowOfflineAccess = true,
 
-                    AllowedScopes =
-                    {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Email,
-                        "feature1", "feature2", 
-                        "transaction"
-                    }
+                    AllowedScopes = allowedScopes
                 },
                 
                 ///////////////////////////////////////////
@@ -128,18 +119,12 @@ namespace Host.Configuration
                     RequirePkce = false,
 
                     RedirectUris = { "https://localhost:44303/signin-oidc" },
-                    BackChannelLogoutUri = "http://localhost:44303/logout",
+                    BackChannelLogoutUri = "https://localhost:44303/logout",
                     PostLogoutRedirectUris = { "https://localhost:44303/signout-callback-oidc" },
 
                     AllowOfflineAccess = true,
 
-                    AllowedScopes =
-                    {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Email,
-                        "feature1", "feature2"
-                    }
+                    AllowedScopes = allowedScopes
                 }
             };
         }

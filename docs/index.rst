@@ -6,7 +6,7 @@ Welcome to IdentityServer4 (latest)
 
 IdentityServer4 is an OpenID Connect and OAuth 2.0 framework for ASP.NET Core.
 
-.. note:: This docs cover the latest version on master. This might not be released yet. Use the version picker in the lower left corner to select docs for a specific version.
+.. note:: This docs cover the latest version on main branch. This might not be released yet. Use the version picker in the lower left corner to select docs for a specific version.
 
 It enables the following features in your applications:
 
@@ -92,11 +92,12 @@ It enables the following features in your applications:
    topics/events
    topics/crypto
    topics/grant_types
-   topics/secrets
+   topics/client_authentication
    topics/extension_grants
    topics/resource_owner
    topics/refresh_tokens
    topics/reference_tokens
+   topics/persisted_grants
    topics/pop
    topics/mtls
    topics/request_object
@@ -126,14 +127,15 @@ It enables the following features in your applications:
    :hidden:
    :caption: Reference
 
+   reference/options
    reference/identity_resource
+   reference/api_scope
    reference/api_resource
    reference/client
    reference/grant_validation_result
    reference/profileservice
    reference/interactionservice
    reference/deviceflow_interactionservice
-   reference/options
    reference/ef
    reference/aspnet_identity
 

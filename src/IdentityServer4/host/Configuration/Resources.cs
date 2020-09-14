@@ -7,7 +7,7 @@ using IdentityServer4.Models;
 using System.Collections.Generic;
 using static IdentityServer4.IdentityServerConstants;
 
-namespace Host.Configuration
+namespace IdentityServerHost.Configuration
 {
     public class Resources
     {
@@ -21,41 +21,44 @@ namespace Host.Configuration
                 new IdentityResources.Email(),
 
                 // custom identity resource with some consolidated claims
-                new IdentityResource("custom.profile", new[] { JwtClaimTypes.Name, JwtClaimTypes.Email, "location" })
+                new IdentityResource("custom.profile", new[] { JwtClaimTypes.Name, JwtClaimTypes.Email, "location", JwtClaimTypes.Address })
             };
 
         // API scopes represent values that describe scope of access and can be requested by the scope parameter (OAuth)
         public static readonly IEnumerable<ApiScope> ApiScopes =
             new[]
             {
-                // local feature
+                // local API scope
                 new ApiScope(LocalApi.ScopeName),
 
-                // some generic scopes
-                new ApiScope("scope1"),
-                new ApiScope("scope2"), 
+                // resource specific scopes
+                new ApiScope("resource1.scope1"),
+                new ApiScope("resource2.scope1"), 
+                
+                // a scope without resource association
                 new ApiScope("scope3"),
+                
+                // a scope shared by multiple resources
+                new ApiScope("shared.scope"),
 
-                // used as a dynamic scope
-                new ApiScope("transaction")
+                // a parameterized scope
+                new ApiScope("transaction", "Transaction")
+                {
+                    Description = "Some Transaction"
+                }
             };
 
         // API resources are more formal representation of a resource with processing rules and their scopes (if any)
         public static readonly IEnumerable<ApiResource> ApiResources = 
             new[]
             {
-                // simple version with ctor
                 new ApiResource("resource1", "Resource 1")
                 {
-                    //// this is needed for introspection when using reference tokens
-                    //ApiSecrets = { new Secret("secret".Sha256()) },
+                    ApiSecrets = { new Secret("secret".Sha256()) },
 
-                    //AllowedSigningAlgorithms = { "RS256", "ES256" }
-
-                    Scopes = { "scope1" }
+                    Scopes = { "resource1.scope1", "shared.scope" }
                 },
                 
-                // expanded version if more control is needed
                 new ApiResource("resource2", "Resource 2")
                 {
                     ApiSecrets =
@@ -63,19 +66,14 @@ namespace Host.Configuration
                         new Secret("secret".Sha256())
                     },
 
-                    //AllowedSigningAlgorithms = { "PS256", "ES256", "RS256" },
-
+                    // additional claims to put into access token
                     UserClaims =
                     {
                         JwtClaimTypes.Name,
                         JwtClaimTypes.Email
                     },
 
-                    Scopes =
-                    {
-                        "api2.scope1",
-                        "api2.scope2"
-                    }
+                    Scopes = { "resource2.scope1", "shared.scope" }
                 }
             };
     }

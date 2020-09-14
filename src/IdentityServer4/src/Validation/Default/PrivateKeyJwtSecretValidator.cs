@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
@@ -20,7 +19,7 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-
+using System.Security.Cryptography.X509Certificates;
 
 namespace IdentityServer4.Validation
 {
@@ -97,11 +96,15 @@ namespace IdentityServer4.Validation
             object o;
             if (jwtToken.Header.TryGetValue("x5c", out o))
             {
-                if (o is string)
+                // if (o is string)
+                var s = o.GetType().ToString();
+                if (o is JArray)
                 {
-                    string x5c = o as string;
+                    // string x5c = o as string;
+                    string[] x5c = (o as JArray).ToObject<string[]>();
 
-                    if (x5c != null && x5c != "")
+                    // if (x5c != null && x5c != "")
+                    if (x5c != null)
                     {
                         // Console.WriteLine("x5c:\n" + x5c);
                         Console.WriteLine("Security 2.1a Server: x5c with certificate chain received");
@@ -114,7 +117,8 @@ namespace IdentityServer4.Validation
                         storeCA.Open(OpenFlags.ReadWrite);
                         bool valid = false;
 
-                        string[] x5c64 = JsonConvert.DeserializeObject<string[]>(x5c);
+                        // string[] x5c64 = JsonConvert.DeserializeObject<string[]>(x5c);
+                        string[] x5c64 = x5c;
 
                         X509Certificate2Collection xcc = new X509Certificate2Collection();
 

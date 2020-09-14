@@ -4,7 +4,6 @@
 
 using IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -31,7 +30,7 @@ namespace IdentityServer4.Configuration
                 options.ExpireTimeSpan = _idsrv.Authentication.CookieLifetime;
                 options.Cookie.Name = IdentityServerConstants.DefaultCookieAuthenticationScheme;
                 options.Cookie.IsEssential = true;
-                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SameSite = _idsrv.Authentication.CookieSameSiteMode;
 
                 options.LoginPath = ExtractLocalUrl(_idsrv.UserInteraction.LoginUrl);
                 options.LogoutPath = ExtractLocalUrl(_idsrv.UserInteraction.LogoutUrl);
@@ -51,7 +50,7 @@ namespace IdentityServer4.Configuration
                 // so we need to make those cookies issued without same-site, thus the browser will
                 // hold onto them and send on the next redirect to the callback page.
                 // see: https://brockallen.com/2019/01/11/same-site-cookies-asp-net-core-and-external-authentication-providers/
-                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SameSite = _idsrv.Authentication.CookieSameSiteMode;
             }
         }
 

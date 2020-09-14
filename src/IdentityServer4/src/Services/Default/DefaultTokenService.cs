@@ -205,6 +205,10 @@ namespace IdentityServer4.Services
             claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
             claims.Add(new Claim("serverName", "identityserver.test.rsa"));
 
+            // iat claim as required by JWT profile
+            claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.UtcNow.ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64));
+
             var issuer = ContextAccessor.HttpContext.GetIdentityServerIssuerUri();
             var token = new Token(OidcConstants.TokenTypes.AccessToken)
             {
@@ -224,7 +228,7 @@ namespace IdentityServer4.Services
                 token.Audiences.Add(aud);
             }
 
-            if (Options.EmitLegacyResourceAudienceClaim)
+            if (Options.EmitStaticAudienceClaim)
             {
                 token.Audiences.Add(string.Format(IdentityServerConstants.AccessTokenAudience, issuer.EnsureTrailingSlash()));
             }

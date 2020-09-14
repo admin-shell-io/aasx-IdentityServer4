@@ -47,7 +47,8 @@ namespace IdentityServer4.Stores
             if (dups.Any())
             {
                 var names = dups.Aggregate((x, y) => x + ", " + y);
-                throw new Exception(String.Format("Duplicate identity scopes found. This is an invalid configuration. Use different names for identity scopes. Scopes found: {0}", names));
+                throw new Exception(
+                    $"Duplicate identity scopes found. This is an invalid configuration. Use different names for identity scopes. Scopes found: {names}");
             }
 
             var apiNames = apiResources.Select(x => x.Name);
@@ -55,7 +56,8 @@ namespace IdentityServer4.Stores
             if (dups.Any())
             {
                 var names = dups.Aggregate((x, y) => x + ", " + y);
-                throw new Exception(String.Format("Duplicate api resources found. This is an invalid configuration. Use different names for API resources. Names found: {0}", names));
+                throw new Exception(
+                    $"Duplicate api resources found. This is an invalid configuration. Use different names for API resources. Names found: {names}");
             }
             
             var scopesNames = apiScopes.Select(x => x.Name);
@@ -63,14 +65,16 @@ namespace IdentityServer4.Stores
             if (dups.Any())
             {
                 var names = dups.Aggregate((x, y) => x + ", " + y);
-                throw new Exception(String.Format("Duplicate scopes found. This is an invalid configuration. Use different names for scopes. Names found: {0}", names));
+                throw new Exception(
+                    $"Duplicate scopes found. This is an invalid configuration. Use different names for scopes. Names found: {names}");
             }
 
             var overlap = identityScopeNames.Intersect(scopesNames).ToArray();
             if (overlap.Any())
             {
                 var names = overlap.Aggregate((x, y) => x + ", " + y);
-                throw new Exception(String.Format("Found identity scopes and API scopes that use the same names. This is an invalid configuration. Use different names for identity scopes and API scopes. Scopes found: {0}", names));
+                throw new Exception(
+                    $"Found identity scopes and API scopes that use the same names. This is an invalid configuration. Use different names for identity scopes and API scopes. Scopes found: {names}");
             }
         }
 
@@ -99,26 +103,14 @@ namespace IdentityServer4.Stores
         /// Creates a resource validation result.
         /// </summary>
         /// <param name="store">The store.</param>
-        /// <param name="parsedScopeValues">The parsed scopes.</param>
+        /// <param name="parsedScopesResult">The parsed scopes.</param>
         /// <returns></returns>
-        public static async Task<ResourceValidationResult> CreateResourceValidationResult(this IResourceStore store, IEnumerable<ParsedScopeValue> parsedScopeValues)
+        public static async Task<ResourceValidationResult> CreateResourceValidationResult(this IResourceStore store, ParsedScopesResult parsedScopesResult)
         {
-            var scopes = parsedScopeValues.Select(x => x.Name).ToArray();
+            var validScopeValues = parsedScopesResult.ParsedScopes;
+            var scopes = validScopeValues.Select(x => x.ParsedName).ToArray();
             var resources = await store.FindEnabledResourcesByScopeAsync(scopes);
-            return new ResourceValidationResult(resources, parsedScopeValues);
-        }
-
-        /// <summary>
-        /// Gets the names of the scopes
-        /// </summary>
-        /// <param name="resourceValidator"></param>
-        /// <param name="scopeValues">The scope names.</param>
-        /// <returns></returns>
-        public static async Task<(IEnumerable<ParsedScopeValue> parsedScopes, IEnumerable<string> scopeNames)> GetParsedScopes(this IResourceValidator resourceValidator, IEnumerable<string> scopeValues)
-        {
-            var parsedScopes = await resourceValidator.ParseRequestedScopesAsync(scopeValues);
-            var scopeNames = parsedScopes.Select(x => x.Name).ToArray();
-            return (parsedScopes, scopeNames);
+            return new ResourceValidationResult(resources, validScopeValues);
         }
 
         /// <summary>

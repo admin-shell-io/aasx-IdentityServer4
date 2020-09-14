@@ -25,7 +25,7 @@ namespace IdentityServer4.Models
             var names = resourceValidationResult.Resources.IdentityResources.Where(x => x.Required).Select(x => x.Name).ToList();
             names.AddRange(resourceValidationResult.Resources.ApiScopes.Where(x => x.Required).Select(x => x.Name));
 
-            var values = resourceValidationResult.ParsedScopes.Where(x => names.Contains(x.Name)).Select(x => x.Value);
+            var values = resourceValidationResult.ParsedScopes.Where(x => names.Contains(x.ParsedName)).Select(x => x.RawValue);
             return values;
         }
 
@@ -127,10 +127,8 @@ namespace IdentityServer4.Models
                 {
                     return allowedAlgorithms.ToHashSet();
                 }
-                else
-                {
-                    throw new InvalidOperationException("Signing algorithms requirements for requested resources are not compatible.");
-                }
+
+                throw new InvalidOperationException("Signing algorithms requirements for requested resources are not compatible.");
             }
 
             return new List<string>();

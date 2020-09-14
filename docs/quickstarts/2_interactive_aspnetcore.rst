@@ -18,7 +18,7 @@ You need to provide the necessary UI parts for login, logout, consent and error.
 While the look & feel as well as the exact workflows will probably always differ in every
 IdentityServer implementation, we provide an MVC-based sample UI that you can use as a starting point.
 
-This UI can be found in the `Quickstart UI repo <https://github.com/IdentityServer/IdentityServer4.Quickstart.UI/tree/master>`_.
+This UI can be found in the `Quickstart UI repo <https://github.com/IdentityServer/IdentityServer4.Quickstart.UI/tree/main>`_.
 You can clone or download this repo and drop the controllers, views, models and CSS into your IdentityServer web application.
 
 Alternatively you can use the .NET CLI (run from within the ``src/IdentityServer`` folder)::
@@ -41,6 +41,13 @@ Creating an MVC client
 ^^^^^^^^^^^^^^^^^^^^^^
 Next you will create an MVC application.
 Use the ASP.NET Core "Web Application" (i.e. MVC) template for that. 
+
+run from the src folder::
+
+    dotnet new mvc -n MVCClient
+    cd ..
+    dotnet sln add .\src\MVCClient\MVCClient.csproj
+
 Once you've created the project, configure the application to run on port 5002.
 
 To add support for OpenID Connect authentication to the MVC application, you first need to add the nuget package containing the OpenID Connect handler to your project, e.g.::
@@ -63,8 +70,7 @@ To add support for OpenID Connect authentication to the MVC application, you fir
         .AddCookie("Cookies")
         .AddOpenIdConnect("oidc", options =>
         {
-            options.Authority = "http://localhost:5000";
-            options.RequireHttpsMetadata = false;
+            options.Authority = "https://localhost:5001";
 
             options.ClientId = "mvc";
             options.ClientSecret = "secret";
@@ -101,7 +107,8 @@ And then to ensure the authentication services execute on each request, add ``Us
             .RequireAuthorization();
     });
 
-.. note:: The ``RequireAuthorization`` method disables anonymous access for the entire application. You can also use the ``[Authorize]`` attribute, if you want to specify that on a per controller or action method basis.
+.. note:: The ``RequireAuthorization`` method disables anonymous access for the entire application. 
+You can also use the ``[Authorize]`` attribute, if you want to specify that on a per controller or action method basis.
 
 Also modify the home view to display the claims of the user as well as the cookie properties::
 
@@ -138,9 +145,9 @@ In contrast to OAuth, scopes in OIDC don't represent APIs, but identity data lik
 name or email address.
 
 Add support for the standard ``openid`` (subject id) and ``profile`` (first name, last name etc..) scopes
-by ammending the ``Ids`` property in ``Config.cs``::
+by ammending the ``IdentityResources`` property in ``Config.cs``::
 
-    public static IEnumerable<IdentityResource> Ids =>
+    public static IEnumerable<IdentityResource> IdentityResources =>
         new List<IdentityResource>
         {
             new IdentityResources.OpenId(),
@@ -150,8 +157,8 @@ by ammending the ``Ids`` property in ``Config.cs``::
 Register the identity resources with IdentityServer in ``startup.cs``::
 
     var builder = services.AddIdentityServer()
-        .AddInMemoryIdentityResources(Config.Ids)
-        .AddInMemoryApiResources(Config.Apis)
+        .AddInMemoryIdentityResources(Config.IdentityResources)
+        .AddInMemoryApiScopes(Config.ApiScopes)
         .AddInMemoryClients(Config.Clients);
 
 .. note:: All standard scopes and their corresponding claims can be found in the OpenID Connect `specification <https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims>`_
@@ -161,7 +168,7 @@ Adding Test Users
 The sample UI also comes with an in-memory "user database". You can enable this in IdentityServer by adding the ``AddTestUsers`` extension method::
 
     var builder = services.AddIdentityServer()
-        .AddInMemoryIdentityResources(Config.Ids)
+        .AddInMemoryIdentityResources(Config.IdentityResources)
         .AddInMemoryApiResources(Config.Apis)
         .AddInMemoryClients(Config.Clients)
         .AddTestUsers(TestUsers.Users);
@@ -198,14 +205,12 @@ The client list should look like this::
                 ClientSecrets = { new Secret("secret".Sha256()) },
 
                 AllowedGrantTypes = GrantTypes.Code,
-                RequireConsent = false,
-                RequirePkce = true,
                 
                 // where to redirect to after login
-                RedirectUris = { "http://localhost:5002/signin-oidc" },
+                RedirectUris = { "https://localhost:5002/signin-oidc" },
 
                 // where to redirect to after logout
-                PostLogoutRedirectUris = { "http://localhost:5002/signout-callback-oidc" },
+                PostLogoutRedirectUris = { "https://localhost:5002/signout-callback-oidc" },
 
                 AllowedScopes = new List<string>
                 {
@@ -262,7 +267,7 @@ The process for defining an identity resource is as follows:
 
 It is also noteworthy, that the retrieval of claims for tokens is an extensibility point - ``IProfileService``.
 Since we are using ``AddTestUsers``, the ``TestUserProfileService`` is used by default.
-You can inspect the source code `here <https://github.com/IdentityServer/IdentityServer4/blob/master/src/IdentityServer4/src/Test/TestUserProfileService.cs>`_
+You can inspect the source code `here <https://github.com/IdentityServer/IdentityServer4/blob/main/src/IdentityServer4/src/Test/TestUserProfileService.cs>`_
 to see how it works.
 
 .. _refExternalAuthenticationQuickstart:
@@ -279,7 +284,7 @@ Adding Google support
 To be able to use Google for authentication, you first need to register with them.
 This is done at their developer `console <https://console.developers.google.com/>`_.
 Create a new project, enable the Google+ API and configure the callback address of your
-local IdentityServer by adding the */signin-google* path to your base-address (e.g. http://localhost:5000/signin-google).
+local IdentityServer by adding the */signin-google* path to your base-address (e.g. https://localhost:5001/signin-google).
 
 The developer console will show you a client ID and secret issued by Google - you will need that in the next step.
 
@@ -328,7 +333,7 @@ Add the OpenId Connect handler to DI::
             options.SaveTokens = true;
 
             options.Authority = "https://demo.identityserver.io/";
-            options.ClientId = "native.code";
+            options.ClientId = "interactive.confidential";
             options.ClientSecret = "secret";
             options.ResponseType = "code";
 
@@ -341,4 +346,4 @@ Add the OpenId Connect handler to DI::
 
 And now a user should be able to use the cloud-hosted demo identity provider.
 
-.. note:: The quickstart UI auto-provisions external users. As an external user logs in for the first time, a new local user is created, and all the external claims are copied over and associated with the new user. The way you deal with such a situation is completely up to you though. Maybe you want to show some sort of registration UI first. The source code for the default quickstart can be found `here <https://github.com/IdentityServer/IdentityServer4.Quickstart.UI>`_. The controller where auto-provisioning is executed can be found `here <https://github.com/IdentityServer/IdentityServer4.Quickstart.UI/blob/master/Quickstart/Account/ExternalController.cs>`_.
+.. note:: The quickstart UI auto-provisions external users. As an external user logs in for the first time, a new local user is created, and all the external claims are copied over and associated with the new user. The way you deal with such a situation is completely up to you though. Maybe you want to show some sort of registration UI first. The source code for the default quickstart can be found `here <https://github.com/IdentityServer/IdentityServer4.Quickstart.UI>`_. The controller where auto-provisioning is executed can be found `here <https://github.com/IdentityServer/IdentityServer4.Quickstart.UI/blob/main/Quickstart/Account/ExternalController.cs>`_.

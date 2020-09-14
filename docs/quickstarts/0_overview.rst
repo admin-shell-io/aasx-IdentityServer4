@@ -13,7 +13,7 @@ it is recommended you do them in order.
 * adding support for ASP.NET Identity
 
 Every quickstart has a reference solution - you can find the code in the 
-`samples <https://github.com/IdentityServer/IdentityServer4/tree/master/samples/Quickstarts>`_ folder.
+`samples <https://github.com/IdentityServer/IdentityServer4/tree/main/samples/Quickstarts>`_ folder.
 
 Preparation
 ^^^^^^^^^^^
@@ -27,4 +27,4 @@ They will be used as a starting point for the various tutorials.
 
 OK - let's get started!
 
-.. note:: The quickstarts target the latest version of IdentityServer and ASP.NET Core (3.0) - there are also quickstarts for `ASP.NET Core 2 <http://docs.identityserver.io/en/aspnetcore2/quickstarts/0_overview.html>`_ and `ASP.NET Core 1 <http://docs.identityserver.io/en/aspnetcore1/quickstarts/0_overview.html>`_.
+.. note:: The quickstarts target the IdentityServer 4.x and ASP.NET Core 3.1.x - there are also quickstarts for `ASP.NET Core 2 <http://docs.identityserver.io/en/aspnetcore2/quickstarts/0_overview.html>`_ and `ASP.NET Core 1 <http://docs.identityserver.io/en/aspnetcore1/quickstarts/0_overview.html>`_.

@@ -3,10 +3,8 @@
 
 
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Linq;
 using System;
-using IdentityModel;
 using System.Collections;
 using System.Diagnostics;
 
@@ -239,12 +237,12 @@ namespace IdentityServer4.Models
         public ICollection<string> IdentityProviderRestrictions { get; set; } = new HashSet<string>();
 
         /// <summary>
-        /// Gets or sets a value indicating whether JWT access tokens should include an identifier. Defaults to <c>false</c>.
+        /// Gets or sets a value indicating whether JWT access tokens should include an identifier. Defaults to <c>true</c>.
         /// </summary>
         /// <value>
         /// <c>true</c> to add an id; otherwise, <c>false</c>.
         /// </value>
-        public bool IncludeJwtId { get; set; } = false;
+        public bool IncludeJwtId { get; set; } = true;
 
         /// <summary>
         /// Allows settings claims for the client (will be included in the access token).

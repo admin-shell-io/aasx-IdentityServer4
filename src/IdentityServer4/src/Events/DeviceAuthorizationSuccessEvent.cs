@@ -3,7 +3,6 @@
 
 
 using IdentityServer4.Extensions;
-using IdentityServer4.Models;
 using IdentityServer4.ResponseHandling;
 using IdentityServer4.Validation;
 
@@ -26,7 +25,7 @@ namespace IdentityServer4.Events
             ClientId = request.ValidatedRequest.Client?.ClientId;
             ClientName = request.ValidatedRequest.Client?.ClientName;
             Endpoint = Constants.EndpointNames.DeviceAuthorization;
-            Scopes = request.ValidatedRequest.ValidatedResources?.ScopeValues.ToSpaceSeparatedString();
+            Scopes = request.ValidatedRequest.ValidatedResources?.RawScopeValues.ToSpaceSeparatedString();
         }
 
         /// <summary>

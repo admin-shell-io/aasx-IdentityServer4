@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Builder
@@ -53,7 +54,7 @@ namespace Microsoft.AspNetCore.Builder
             if (loggerFactory == null) throw new ArgumentNullException(nameof(loggerFactory));
 
             var logger = loggerFactory.CreateLogger("IdentityServer4.Startup");
-            logger.LogInformation("Starting IdentityServer4 version {version}", typeof(IdentityServerApplicationBuilderExtensions).Assembly.GetName().Version.ToString());
+            logger.LogInformation("Starting IdentityServer4 version {version}", FileVersionInfo.GetVersionInfo(typeof(IdentityServer4.Hosting.IdentityServerMiddleware).Assembly.Location).ProductVersion);
 
             var scopeFactory = app.ApplicationServices.GetService<IServiceScopeFactory>();
 
@@ -119,17 +120,7 @@ namespace Microsoft.AspNetCore.Builder
         private static void ValidateOptions(IdentityServerOptions options, ILogger logger)
         {
             if (options.IssuerUri.IsPresent()) logger.LogDebug("Custom IssuerUri set to {0}", options.IssuerUri);
-
-            if (options.PublicOrigin.IsPresent())
-            {
-                if (!Uri.TryCreate(options.PublicOrigin, UriKind.Absolute, out var uri))
-                {
-                    throw new InvalidOperationException($"PublicOrigin is not valid: {options.PublicOrigin}");
-                }
-
-                logger.LogDebug("PublicOrigin explicitly set to {0}", options.PublicOrigin);
-            }
-
+            
             // todo: perhaps different logging messages?
             //if (options.UserInteraction.LoginUrl.IsMissing()) throw new InvalidOperationException("LoginUrl is not configured");
             //if (options.UserInteraction.LoginReturnUrlParameter.IsMissing()) throw new InvalidOperationException("LoginReturnUrlParameter is not configured");

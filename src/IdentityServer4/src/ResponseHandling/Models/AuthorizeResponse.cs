@@ -3,7 +3,6 @@
 
 
 using IdentityServer4.Extensions;
-using IdentityServer4.Models;
 using IdentityServer4.Validation;
 
 #pragma warning disable 1591
@@ -15,7 +14,7 @@ namespace IdentityServer4.ResponseHandling
         public ValidatedAuthorizeRequest Request { get; set; }
         public string RedirectUri => Request?.RedirectUri;
         public string State => Request?.State;
-        public string Scope => Request?.ValidatedResources?.ScopeValues.ToSpaceSeparatedString();
+        public string Scope => Request?.ValidatedResources?.RawScopeValues.ToSpaceSeparatedString();
 
         public string IdentityToken { get; set; }
         public string AccessToken { get; set; }

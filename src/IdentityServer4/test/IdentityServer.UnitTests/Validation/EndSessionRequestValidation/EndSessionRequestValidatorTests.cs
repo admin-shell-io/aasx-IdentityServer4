@@ -12,7 +12,6 @@ using IdentityServer4;
 using IdentityServer4.Configuration;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
-using IdentityServer4.Stores;
 using IdentityServer4.Validation;
 using Xunit;
 
@@ -26,15 +25,14 @@ namespace IdentityServer.UnitTests.Validation.EndSessionRequestValidation
         private StubRedirectUriValidator _stubRedirectUriValidator = new StubRedirectUriValidator();
         private MockHttpContextAccessor _context = new MockHttpContextAccessor();
         private MockUserSession _userSession = new MockUserSession();
-        private MockMessageStore<EndSession> _mockEndSessionMessageStore = new MockMessageStore<EndSession>();
-        private InMemoryClientStore _clientStore;
+        private MockLogoutNotificationService _mockLogoutNotificationService = new MockLogoutNotificationService();
+        private MockMessageStore<LogoutNotificationContext> _mockEndSessionMessageStore = new MockMessageStore<LogoutNotificationContext>();
 
         private ClaimsPrincipal _user;
 
         public EndSessionRequestValidatorTests()
         {
             _user = new IdentityServerUser("alice").CreatePrincipal();
-            _clientStore = new InMemoryClientStore(new Client[0]);
 
             _options = TestIdentityServerOptions.Create();
             _subject = new EndSessionRequestValidator(
@@ -43,7 +41,7 @@ namespace IdentityServer.UnitTests.Validation.EndSessionRequestValidation
                 _stubTokenValidator,
                 _stubRedirectUriValidator,
                 _userSession,
-                _clientStore,
+                _mockLogoutNotificationService,
                 _mockEndSessionMessageStore,
                 TestLogger.Create<EndSessionRequestValidator>());
         }

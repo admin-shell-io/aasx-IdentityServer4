@@ -1,4 +1,4 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
@@ -11,6 +11,8 @@ using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using System;
+using IdentityServer4.Extensions;
 
 namespace IdentityServer4.EntityFramework.Stores
 {
@@ -41,14 +43,11 @@ namespace IdentityServer4.EntityFramework.Stores
             Logger = logger;
         }
 
-        /// <summary>
-        /// Stores the asynchronous.
-        /// </summary>
-        /// <param name="token">The token.</param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public virtual async Task StoreAsync(PersistedGrant token)
         {
-            var existing = await Context.PersistedGrants.SingleOrDefaultAsync(x => x.Key == token.Key);
+            var existing = (await Context.PersistedGrants.Where(x => x.Key == token.Key).ToArrayAsync())
+                .SingleOrDefault(x => x.Key == token.Key);
             if (existing == null)
             {
                 Logger.LogDebug("{persistedGrantKey} not found in database", token.Key);
@@ -73,14 +72,11 @@ namespace IdentityServer4.EntityFramework.Stores
             }
         }
 
-        /// <summary>
-        /// Gets the grant.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public virtual async Task<PersistedGrant> GetAsync(string key)
         {
-            var persistedGrant = await Context.PersistedGrants.AsNoTracking().FirstOrDefaultAsync(x => x.Key == key);
+            var persistedGrant = (await Context.PersistedGrants.AsNoTracking().Where(x => x.Key == key).ToArrayAsync())
+                .SingleOrDefault(x => x.Key == key);
             var model = persistedGrant?.ToModel();
 
             Logger.LogDebug("{persistedGrantKey} found in database: {persistedGrantKeyFound}", key, model != null);
@@ -88,29 +84,26 @@ namespace IdentityServer4.EntityFramework.Stores
             return model;
         }
 
-        /// <summary>
-        /// Gets all grants for a given subject id.
-        /// </summary>
-        /// <param name="subjectId">The subject identifier.</param>
-        /// <returns></returns>
-        public virtual async Task<IEnumerable<PersistedGrant>> GetAllAsync(string subjectId)
+        /// <inheritdoc/>
+        public async Task<IEnumerable<PersistedGrant>> GetAllAsync(PersistedGrantFilter filter)
         {
-            var persistedGrants = await Context.PersistedGrants.Where(x => x.SubjectId == subjectId).AsNoTracking().ToListAsync();
+            filter.Validate();
+
+            var persistedGrants = await Filter(Context.PersistedGrants.AsQueryable(), filter).ToArrayAsync();
+            persistedGrants = Filter(persistedGrants.AsQueryable(), filter).ToArray();
+            
             var model = persistedGrants.Select(x => x.ToModel());
 
-            Logger.LogDebug("{persistedGrantCount} persisted grants found for {subjectId}", persistedGrants.Count, subjectId);
+            Logger.LogDebug("{persistedGrantCount} persisted grants found for {@filter}", persistedGrants.Length, filter);
 
             return model;
         }
 
-        /// <summary>
-        /// Removes the grant by key.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public virtual async Task RemoveAsync(string key)
         {
-            var persistedGrant = await Context.PersistedGrants.FirstOrDefaultAsync(x => x.Key == key);
+            var persistedGrant = (await Context.PersistedGrants.Where(x => x.Key == key).ToArrayAsync())
+                .SingleOrDefault(x => x.Key == key);
             if (persistedGrant!= null)
             {
                 Logger.LogDebug("removing {persistedGrantKey} persisted grant from database", key);
@@ -132,17 +125,15 @@ namespace IdentityServer4.EntityFramework.Stores
             }
         }
 
-        /// <summary>
-        /// Removes all grants for a given subject id and client id combination.
-        /// </summary>
-        /// <param name="subjectId">The subject identifier.</param>
-        /// <param name="clientId">The client identifier.</param>
-        /// <returns></returns>
-        public virtual async Task RemoveAllAsync(string subjectId, string clientId)
+        /// <inheritdoc/>
+        public async Task RemoveAllAsync(PersistedGrantFilter filter)
         {
-            var persistedGrants = await Context.PersistedGrants.Where(x => x.SubjectId == subjectId && x.ClientId == clientId).ToListAsync();
+            filter.Validate();
 
-            Logger.LogDebug("removing {persistedGrantCount} persisted grants from database for subject {subjectId}, clientId {clientId}", persistedGrants.Count, subjectId, clientId);
+            var persistedGrants = await Filter(Context.PersistedGrants.AsQueryable(), filter).ToArrayAsync();
+            persistedGrants = Filter(persistedGrants.AsQueryable(), filter).ToArray();
+
+            Logger.LogDebug("removing {persistedGrantCount} persisted grants from database for {@filter}", persistedGrants.Length, filter);
 
             Context.PersistedGrants.RemoveRange(persistedGrants);
 
@@ -152,36 +143,31 @@ namespace IdentityServer4.EntityFramework.Stores
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                Logger.LogInformation("removing {persistedGrantCount} persisted grants from database for subject {subjectId}, clientId {clientId}: {error}", persistedGrants.Count, subjectId, clientId, ex.Message);
+                Logger.LogInformation("removing {persistedGrantCount} persisted grants from database for subject {@filter}: {error}", persistedGrants.Length, filter, ex.Message);
             }
         }
 
-        /// <summary>
-        /// Removes all grants of a give type for a given subject id and client id combination.
-        /// </summary>
-        /// <param name="subjectId">The subject identifier.</param>
-        /// <param name="clientId">The client identifier.</param>
-        /// <param name="type">The type.</param>
-        /// <returns></returns>
-        public virtual async Task RemoveAllAsync(string subjectId, string clientId, string type)
+
+        private IQueryable<Entities.PersistedGrant> Filter(IQueryable<Entities.PersistedGrant> query, PersistedGrantFilter filter)
         {
-            var persistedGrants = await Context.PersistedGrants.Where(x =>
-                x.SubjectId == subjectId &&
-                x.ClientId == clientId &&
-                x.Type == type).ToListAsync();
-
-            Logger.LogDebug("removing {persistedGrantCount} persisted grants from database for subject {subjectId}, clientId {clientId}, grantType {persistedGrantType}", persistedGrants.Count, subjectId, clientId, type);
-
-            Context.PersistedGrants.RemoveRange(persistedGrants);
-
-            try
+            if (!String.IsNullOrWhiteSpace(filter.ClientId))
             {
-                await Context.SaveChangesAsync();
+                query = query.Where(x => x.ClientId == filter.ClientId);
             }
-            catch (DbUpdateConcurrencyException ex)
+            if (!String.IsNullOrWhiteSpace(filter.SessionId))
             {
-                Logger.LogInformation("exception removing {persistedGrantCount} persisted grants from database for subject {subjectId}, clientId {clientId}, grantType {persistedGrantType}: {error}", persistedGrants.Count, subjectId, clientId, type, ex.Message);
+                query = query.Where(x => x.SessionId == filter.SessionId);
             }
+            if (!String.IsNullOrWhiteSpace(filter.SubjectId))
+            {
+                query = query.Where(x => x.SubjectId == filter.SubjectId);
+            }
+            if (!String.IsNullOrWhiteSpace(filter.Type))
+            {
+                query = query.Where(x => x.Type == filter.Type);
+            }
+
+            return query;
         }
     }
 }

@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using IdentityServer4.Extensions;
 using IdentityServer4.Validation;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -18,7 +17,7 @@ namespace IdentityServer4.Models
         /// <summary>
         /// The client.
         /// </summary>
-        public Client Client { get; internal set; }
+        public Client Client { get; set; }
 
         /// <summary>
         /// The display mode passed from the authorization request.
@@ -26,7 +25,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The display mode.
         /// </value>
-        public string DisplayMode { get; internal set; }
+        public string DisplayMode { get; set; }
 
         /// <summary>
         /// Gets or sets the redirect URI.
@@ -34,7 +33,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The redirect URI.
         /// </value>
-        public string RedirectUri { get; internal set; }
+        public string RedirectUri { get; set; }
 
         /// <summary>
         /// The UI locales passed from the authorization request.
@@ -42,7 +41,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The UI locales.
         /// </value>
-        public string UiLocales { get; internal set; }
+        public string UiLocales { get; set; }
 
         /// <summary>
         /// The external identity provider requested. This is used to bypass home realm 
@@ -52,7 +51,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The external identity provider identifier.
         /// </value>
-        public string IdP { get; internal set; }
+        public string IdP { get; set; }
 
         /// <summary>
         /// The tenant requested. This is provided via the <c>"tenant:"</c> prefix to 
@@ -61,7 +60,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The tenant.
         /// </value>
-        public string Tenant { get; internal set; }
+        public string Tenant { get; set; }
 
         /// <summary>
         /// The expected username the user will use to login. This is requested from the client 
@@ -70,7 +69,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The LoginHint.
         /// </value>
-        public string LoginHint { get; internal set; }
+        public string LoginHint { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of prompt modes.
@@ -78,7 +77,7 @@ namespace IdentityServer4.Models
         /// <value>
         /// The collection of prompt modes.
         /// </value>
-        public IEnumerable<string> PromptModes { get; internal set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> PromptModes { get; set; } = Enumerable.Empty<string>();
 
         /// <summary>
         /// The acr values passed from the authorization request.
@@ -86,12 +85,12 @@ namespace IdentityServer4.Models
         /// <value>
         /// The acr values.
         /// </value>
-        public IEnumerable<string> AcrValues { get; internal set; }
+        public IEnumerable<string> AcrValues { get; set; }
 
         /// <summary>
         /// The validated resources.
         /// </summary>
-        public ResourceValidationResult ValidatedResources { get; internal set; }
+        public ResourceValidationResult ValidatedResources { get; set; }
 
         /// <summary>
         /// Gets the entire parameter collection.

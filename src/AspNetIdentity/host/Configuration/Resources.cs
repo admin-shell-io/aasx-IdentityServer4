@@ -7,11 +7,12 @@ using IdentityServer4.Models;
 using System.Collections.Generic;
 using static IdentityServer4.IdentityServerConstants;
 
-namespace Host.Configuration
+namespace IdentityServerHost.Configuration
 {
     public class Resources
     {
-        public static IEnumerable<IdentityResource> IdentityResources =
+        // identity resources represent identity data about a user that can be requested via the scope parameter (OpenID Connect)
+        public static readonly IEnumerable<IdentityResource> IdentityResources =
             new[]
             {
                 // some standard scopes from the OIDC spec
@@ -23,51 +24,57 @@ namespace Host.Configuration
                 new IdentityResource("custom.profile", new[] { JwtClaimTypes.Name, JwtClaimTypes.Email, "location" })
             };
 
-        public static IEnumerable<ApiResource> ApiResources = new[]
+        // API scopes represent values that describe scope of access and can be requested by the scope parameter (OAuth)
+        public static readonly IEnumerable<ApiScope> ApiScopes =
+            new[]
             {
-                // simple version with ctor
-                new ApiResource("api1", "Some API 1")
+                // local API scope
+                new ApiScope(LocalApi.ScopeName),
+
+                // resource specific scopes
+                new ApiScope("resource1.scope1"),
+                new ApiScope("resource2.scope1"), 
+                
+                // a scope without resource association
+                new ApiScope("scope3"),
+                
+                // a scope shared by multiple resources
+                new ApiScope("shared.scope"),
+
+                // a parameterized scope
+                new ApiScope("transaction", "Transaction")
                 {
-                    //// this is needed for introspection when using reference tokens
-                    //ApiSecrets = { new Secret("secret".Sha256()) },
+                    Description = "Some Transaction"
+                }
+            };
 
-                    //AllowedSigningAlgorithms = { "RS256", "ES256" }
+        // API resources are more formal representation of a resource with processing rules and their scopes (if any)
+        public static readonly IEnumerable<ApiResource> ApiResources = 
+            new[]
+            {
+                new ApiResource("resource1", "Resource 1")
+                {
+                    ApiSecrets = { new Secret("secret".Sha256()) },
 
-                    Scopes = { "feature1" }
+                    Scopes = { "resource1.scope1", "shared.scope" }
                 },
                 
                 // expanded version if more control is needed
-                new ApiResource
+                new ApiResource("resource2", "Resource 2")
                 {
-                    Name = "api2",
-
                     ApiSecrets =
                     {
                         new Secret("secret".Sha256())
                     },
 
-                    //AllowedSigningAlgorithms = { "PS256", "ES256", "RS256" },
-
+                    // additional claims to put into access token
                     UserClaims =
                     {
                         JwtClaimTypes.Name,
                         JwtClaimTypes.Email
                     },
 
-                    Scopes = { "feature2", "feature3" }
-                }
-            };
-
-        public static IEnumerable<ApiScope> ApiScopes = new[]
-            {
-                // local API
-                new ApiScope(LocalApi.ScopeName),
-                new ApiScope("feature1"),
-                new ApiScope("feature2"),
-                new ApiScope("feature3"),
-                new ApiScope
-                {
-                    Name = "transaction"
+                    Scopes = { "resource2.scope1", "shared.scope" }
                 }
             };
     }

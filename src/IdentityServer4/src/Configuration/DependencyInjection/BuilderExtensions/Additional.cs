@@ -7,10 +7,10 @@ using IdentityServer4.Services;
 using IdentityServer4.Stores;
 using IdentityServer4.Validation;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Http;
 using System;
 using System.Net.Http;
 using IdentityServer4;
+using IdentityServer4.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -82,6 +82,34 @@ namespace Microsoft.Extensions.DependencyInjection
            where T : class, IProfileService
         {
             builder.Services.AddTransient<IProfileService, T>();
+
+            return builder;
+        }
+        
+        /// <summary>
+        /// Adds a resource validator.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="builder">The builder.</param>
+        /// <returns></returns>
+        public static IIdentityServerBuilder AddResourceValidator<T>(this IIdentityServerBuilder builder)
+            where T : class, IResourceValidator
+        {
+            builder.Services.AddTransient<IResourceValidator, T>();
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a scope parser.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="builder">The builder.</param>
+        /// <returns></returns>
+        public static IIdentityServerBuilder AddScopeParser<T>(this IIdentityServerBuilder builder)
+            where T : class, IScopeParser
+        {
+            builder.Services.AddTransient<IScopeParser, T>();
 
             return builder;
         }
@@ -343,16 +371,19 @@ namespace Microsoft.Extensions.DependencyInjection
             }
             else
             {
-                httpBuilder = builder.Services.AddHttpClient(name);
+                httpBuilder = builder.Services.AddHttpClient(name)
+                    .ConfigureHttpClient(client => {
+                        client.Timeout = TimeSpan.FromSeconds(IdentityServerConstants.HttpClients.DefaultTimeoutSeconds);
+                    });
             }
 
-            builder.Services.AddTransient<BackChannelLogoutHttpClient>(s =>
+            builder.Services.AddTransient<IBackChannelLogoutHttpClient>(s =>
             {
                 var httpClientFactory = s.GetRequiredService<IHttpClientFactory>();
                 var httpClient = httpClientFactory.CreateClient(name);
                 var loggerFactory = s.GetRequiredService<ILoggerFactory>();
                 
-                return new BackChannelLogoutHttpClient(httpClient, loggerFactory);
+                return new DefaultBackChannelLogoutHttpClient(httpClient, loggerFactory);
             });
 
             return httpBuilder;
@@ -377,16 +408,20 @@ namespace Microsoft.Extensions.DependencyInjection
             }
             else
             {
-                httpBuilder = builder.Services.AddHttpClient(name);
+                httpBuilder = builder.Services.AddHttpClient(name)
+                    .ConfigureHttpClient(client => {
+                        client.Timeout = TimeSpan.FromSeconds(IdentityServerConstants.HttpClients.DefaultTimeoutSeconds);
+                    });
             }
             
-            builder.Services.AddTransient<JwtRequestUriHttpClient>(s =>
+            builder.Services.AddTransient<IJwtRequestUriHttpClient, DefaultJwtRequestUriHttpClient>(s =>
             {
                 var httpClientFactory = s.GetRequiredService<IHttpClientFactory>();
                 var httpClient = httpClientFactory.CreateClient(name);
                 var loggerFactory = s.GetRequiredService<ILoggerFactory>();
+                var options = s.GetRequiredService<IdentityServerOptions>();
 
-                return new JwtRequestUriHttpClient(httpClient, loggerFactory);
+                return new DefaultJwtRequestUriHttpClient(httpClient, options, loggerFactory);
             });
 
             return httpBuilder;
