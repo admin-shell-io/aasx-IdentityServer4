@@ -1,4 +1,4 @@
-This is a copy of * https://github.com/IdentityServer/IdentityServer4. The current commit of this fork is e70eac45b8ae8cf5b4e8c75496005c7198387ee3.
+This is a copy of https://github.com/IdentityServer/IdentityServer4. The latest original commit of this fork is e70eac45b8ae8cf5b4e8c75496005c7198387ee3.
 There is no specific released publish. Please compile with Visual Studio Community Edition by yourself.
 
 
