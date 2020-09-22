@@ -24,6 +24,12 @@ namespace IdentityServer4.ResponseHandling
     /// <seealso cref="IdentityServer4.ResponseHandling.IDiscoveryResponseGenerator" />
     public class DiscoveryResponseGenerator : IDiscoveryResponseGenerator
     {
+        // OZ
+        /// <summary>
+        /// show root cert
+        /// </summary>
+        public static List<string> RootCertSubjects = new List<string>();
+
         /// <summary>
         /// The options
         /// </summary>
@@ -357,6 +363,10 @@ namespace IdentityServer4.ResponseHandling
                     }
                 }
             }
+
+            // OZ
+            if (RootCertSubjects.Count != 0)
+                entries.Add("rootCertSubjects", RootCertSubjects);
 
             return entries;
         }

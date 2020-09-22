@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.IO;
+using Microsoft.Extensions.Primitives;
 
 namespace IdentityServerHost
 {
@@ -35,6 +36,8 @@ namespace IdentityServerHost
 
                 root.Add(cert);
                 Console.WriteLine("Security 1.1 Add " + f.Name);
+
+                IdentityServer4.ResponseHandling.DiscoveryResponseGenerator.RootCertSubjects.Add(cert.Subject);
             }
 
             Directory.CreateDirectory("./temp");
