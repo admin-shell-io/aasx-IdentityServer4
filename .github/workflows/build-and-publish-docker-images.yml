@@ -1,0 +1,28 @@
+name: Build-and-publish-docker-images-workflow
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - '*/Fix-*-docker*'
+      - '*/Set-up-*docker*'
+
+  release:
+    types: [published]
+
+jobs:
+  Build-and-publish-docker-images:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false
+    steps:
+      - uses: actions/checkout@master
+        
+      - name: Build and publish aasx-identity-server4
+        uses: docker/build-push-action@v1
+        with:
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: adminshellio/aasx-identity-server4
+          tag_with_ref: true
+          dockerfile: docker/Dockerfile-aasx-identity-server4

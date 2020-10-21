@@ -1,0 +1,29 @@
+# It is expected that this docker is executed in the context of repository root.
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
+WORKDIR /repo
+
+COPY ./.config/ /repo/.config/
+COPY ./docker/start.sh /repo/docker/
+#COPY ./build.sh /repo/
+#COPY ./clean.sh /repo/
+#COPY ./create_persisted_grant_store.sh /repo/
+COPY ./icon.jpg /repo/
+COPY ./key.snk /repo/
+COPY ./LICENSE /repo/
+COPY ./src/ /repo/src/
+
+RUN cd /repo/src/IdentityServer4 && dotnet build -c Release
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+EXPOSE 50000                                                                                                            
+EXPOSE 50001
+
+COPY --from=build-env /repo/docker/start.sh /aasx-IdentityServer4/
+
+COPY --from=build-env /repo/src/IdentityServer4/host/bin/Release/netcoreapp3.1/ /aasx-IdentityServer4/
+COPY --from=build-env /repo/src/IdentityServer4/host/keys/ /aasx-IdentityServer4/keys/
+COPY --from=build-env /repo/src/IdentityServer4/host/root/ /aasx-IdentityServer4/root/
+COPY --from=build-env /repo/src/IdentityServer4/host/wwwroot/ /aasx-IdentityServer4/wwwroot/
+COPY --from=build-env /repo/src/IdentityServer4/host/appsettings.json /aasx-IdentityServer4/
+
+ENTRYPOINT ["/aasx-IdentityServer4/start.sh"]
