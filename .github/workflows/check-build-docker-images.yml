@@ -1,0 +1,16 @@
+name: Check-build-docker-images-workflow
+
+on: [push]
+
+jobs:
+  Check-build-docker-images:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.body, 'The workflow check-build-docker-images was intentionally skipped.') == false
+    steps:
+      - uses: actions/checkout@master
+        
+      - name: Build aasx-identity-server4
+        uses: docker/build-push-action@v1
+        with:
+          push: false
+          dockerfile: docker/Dockerfile-aasx-identity-server4

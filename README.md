@@ -1,6 +1,54 @@
-This is a fork of https://github.com/IdentityServer/IdentityServer4. The latest original commit of this fork is e70eac45b8ae8cf5b4e8c75496005c7198387ee3.
-There is no specific release published. Please compile with Visual Studio Community Edition by yourself.
+## About this fork
 
+![Build-and-publish-docker-images-workflow](
+https://github.com/admin-shell-io/aasx-IdentityServer4/workflows/Build-and-publish-docker-images-workflow/badge.svg
+)
+
+This is a fork of https://github.com/IdentityServer/IdentityServer4. The latest original commit of this fork is 
+[e70eac45b8ae8cf5b4e8c75496005c7198387ee3](
+https://github.com/IdentityServer/IdentityServer4/commit/e70eac45b8ae8cf5b4e8c75496005c7198387ee3
+).
+There is no specific release published. Please compile with [`build.sh`](build.sh) or [`build.ps1`](build.ps1) yourself.
+
+### Docker Image
+
+For your convenience we provide docker images built and published automatically on every push to 
+the master branch of this forked repository.
+The images are available on DockerHub: https://hub.docker.com/repository/docker/adminshellio/aasx-identity-server4
+
+Pull the latest image from the repository first:
+```
+docker pull adminshellio/aasx-identity-server4`
+```
+
+Then run the docker:
+```
+docker run \
+    --detach \
+    --network host \
+    --volume /path/to/certificate.pfx:/aasx-IdentityServer4/certificate.pfx \
+    adminshellio/aasx-identity-server4
+```
+
+Mind that you have to mount your PFX certificate to the container's `/aasx-IdentityServer4/certificate.pfx`. 
+(The path on the host must be an absolute one. Otherwise, the docker will silently ignore the volume!)
+
+The password for the certificate is hard-coded to `i40`. For further hard-coded settings, see 
+[`src/IdentityServer4/host/appsettings.json`](src/IdentityServer4/host/appsettings.json).
+
+The image is set to run on ports 50000 and 50001, respectively. If you need different ports, you can set them in
+`docker run`:
+
+```
+docker run \
+    --detach \
+    --network host \
+    --volume /path/to/certificate.pfx:/aasx-IdentityServer4/certificate.pfx \
+    -p 12345:50000 \
+    -p 54321:50001 \
+    adminshellio/aasx-identity-server4
+```
+where `12345` and `54321` are host's ports.
 
 ## About IdentityServer4
 [<img align="right" width="100px" src="https://dotnetfoundation.org/img/logo_big.svg" />](https://dotnetfoundation.org/projects?searchquery=IdentityServer&type=project)
