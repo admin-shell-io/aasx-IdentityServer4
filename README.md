@@ -18,7 +18,7 @@ The images are available on DockerHub: https://hub.docker.com/repository/docker/
 
 Pull the latest image from the repository first:
 ```
-docker pull adminshellio/aasx-identity-server4`
+docker pull adminshellio/aasx-identity-server4
 ```
 
 Then run the docker:
@@ -49,6 +49,10 @@ docker run \
     adminshellio/aasx-identity-server4
 ```
 where `12345` and `54321` are host's ports.
+
+An example IdentityServer4 is running on https://admin-shell-io.com:50001/.well-known/openid-configuration.
+
+Take also a look on the Security demo on http://admin-shell-io.com/screencasts/. An authentication flow together with AASX Package Explorer and an AAS download from an AASX Server are shown in that demo. (Remark: the screencast will be updated to the actual extended implementation soon.)
 
 ## About IdentityServer4
 [<img align="right" width="100px" src="https://dotnetfoundation.org/img/logo_big.svg" />](https://dotnetfoundation.org/projects?searchquery=IdentityServer&type=project)
