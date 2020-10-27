@@ -8,6 +8,8 @@ This is a fork of https://github.com/IdentityServer/IdentityServer4. The latest 
 [e70eac45b8ae8cf5b4e8c75496005c7198387ee3](
 https://github.com/IdentityServer/IdentityServer4/commit/e70eac45b8ae8cf5b4e8c75496005c7198387ee3
 ).
+See [ChangesMade](https://github.com/admin-shell-io/aasx-IdentityServer4/blob/master/ChangesMade) for the applied specific changes.
+
 There is no specific release published. Please compile with [`build.sh`](build.sh) or [`build.ps1`](build.ps1) yourself.
 
 ### Docker Image
