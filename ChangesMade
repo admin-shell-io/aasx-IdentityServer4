@@ -1,5 +1,5 @@
 Below you find "IdentityServer4 patch to e70eac45b8ae8cf5b4e8c75496005c7198387ee3.diff".
-If needed, you may apply the patch to newer version fo IdentityServer4 by this file.
+If needed, you may apply the patch to newer version of IdentityServer4 by this file.
 
  .../src/ConsolePrivateKeyJwtClient/Program.cs      |  65 ++++++++++++--
  src/IdentityServer4/host/Program.cs                |  23 +++++
