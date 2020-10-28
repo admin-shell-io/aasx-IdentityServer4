@@ -10,6 +10,12 @@ https://github.com/IdentityServer/IdentityServer4/commit/e70eac45b8ae8cf5b4e8c75
 ).
 See [ChangesMade](https://github.com/admin-shell-io/aasx-IdentityServer4/blob/master/ChangesMade) for the applied specific changes.
 
+IdentityServer4 already included ConsolePrivateKeyJwtClient, but this standard client only included a single certificate.
+This was extended by the Industrie 4.0 certificate chain. By JWT and X5C this certificate chain is transmitted to the IdentityServer4.
+The certificate chain is checked against root-certifcates which are loaded at startup from the /root directory.
+The signature of the JWT is also checked by the just transmitted user certificate as part of the chain.
+See admin-shell-io.com/screencast with a running demo.
+
 There is no specific release published. Please compile with [`build.sh`](build.sh) or [`build.ps1`](build.ps1) yourself.
 
 ### Docker Image
