@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -202,7 +203,16 @@ namespace IdentityServer4.Services
                 claims.Add(new Claim(JwtClaimTypes.SessionId, request.ValidatedRequest.SessionId));
             }
             // oz
-            claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
+            var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
+            object o;
+            if (jwtToken.Payload.TryGetValue("email", out o))
+            {
+                if (o is string s)
+                {
+                    claims.Add(new Claim("userName", s.ToLower()));
+                }
+            }
+            //// claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
             claims.Add(new Claim("serverName", "identityserver.test.rsa"));
 
             // iat claim as required by JWT profile
