@@ -10,11 +10,13 @@ using IdentityServer4.Stores;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace IdentityServer4.Services
@@ -203,13 +205,53 @@ namespace IdentityServer4.Services
                 claims.Add(new Claim(JwtClaimTypes.SessionId, request.ValidatedRequest.SessionId));
             }
             // oz
+            bool foundUserName = false;
             var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
             object o;
             if (jwtToken.Payload.TryGetValue("email", out o))
             {
                 if (o is string s)
                 {
-                    claims.Add(new Claim("userName", s.ToLower()));
+                    if (s != null && s != "")
+                    {
+                        claims.Add(new Claim("userName", s.ToLower()));
+                        Console.WriteLine("username = " + s.ToLower());
+                        foundUserName = true;
+                    }
+                }
+            }
+            if (!foundUserName)
+            {
+                if (jwtToken.Header.TryGetValue("x5c", out o))
+                {
+                    if (o is JArray)
+                    {
+                        string[] x5c = (o as JArray).ToObject<string[]>();
+
+                        if (x5c != null)
+                        {
+                            Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
+                            var x509 = new X509Certificate2(certFileBytes);
+                            if (x509.Issuer.Contains("PHOENIX CONTACT") ||
+                                    x509.Issuer.Contains("Phoenix Contact"))
+                            {
+                                string subject = x509.Subject.Substring(4);
+                                string[] split1 = subject.Split("(");
+                                if (split1.Length == 2)
+                                {
+                                    string[] split2 = split1[0].Split(",");
+                                    if (split2.Length == 2)
+                                    {
+                                        string email = split2[1].Substring(1, 1) + split2[0] + "@phoenixcontact.com";
+                                        email = email.ToLower();
+                                        claims.Add(new Claim("userName", email));
+                                        Console.WriteLine("username = " + email);
+                                        foundUserName = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             //// claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
