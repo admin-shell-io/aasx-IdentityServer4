@@ -244,6 +244,10 @@ namespace IdentityServer4.Services
                                     {
                                         string email = split2[1].Substring(1, 1) + split2[0] + "@phoenixcontact.com";
                                         email = email.ToLower();
+                                        email = email.Replace("ä", "ae");
+                                        email = email.Replace("ö", "oe");
+                                        email = email.Replace("ü", "ue");
+                                        email = email.Replace("ß", "ss");
                                         claims.Add(new Claim("userName", email));
                                         Console.WriteLine("username = " + email);
                                         foundUserName = true;
