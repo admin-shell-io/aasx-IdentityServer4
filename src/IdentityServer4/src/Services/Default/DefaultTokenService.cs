@@ -232,8 +232,7 @@ namespace IdentityServer4.Services
                         {
                             Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
                             var x509 = new X509Certificate2(certFileBytes);
-                            if (x509.Issuer.Contains("PHOENIX CONTACT") ||
-                                    x509.Issuer.Contains("Phoenix Contact"))
+                            if (x509.Issuer.ToLower().Contains("phoenix contact"))
                             {
                                 string subject = x509.Subject.Substring(4);
                                 string[] split1 = subject.Split("(");
@@ -254,6 +253,19 @@ namespace IdentityServer4.Services
                                     }
                                 }
                             }
+                            if (!foundUserName)
+                            {
+                                if (x509.Issuer.ToLower().Contains("bosch") )
+                                {
+                                    string subject = x509.Subject.Substring(3);
+                                    string[] split1 = subject.Split(",");
+                                    string email = split1[0] + "@de.bosch.com";
+                                    email = email.ToLower();
+                                    claims.Add(new Claim("userName", email));
+                                    Console.WriteLine("username = " + email);
+                                    foundUserName = true;
+                                }
+                            }                            
                         }
                     }
                 }
