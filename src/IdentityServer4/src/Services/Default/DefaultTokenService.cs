@@ -271,7 +271,7 @@ namespace IdentityServer4.Services
                                 if (x509.Issuer.ToLower().Contains("festo"))
                                 {
                                     string subject = x509.Subject.Substring(3);
-                                    string email = subject + "@festo.com";
+                                    string email = subject + "@de.festo.com";
                                     email = email.ToLower();
                                     claims.Add(new Claim("userName", email));
                                     Console.WriteLine("username = " + email);
