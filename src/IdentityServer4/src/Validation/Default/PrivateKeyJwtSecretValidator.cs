@@ -203,6 +203,12 @@ namespace IdentityServer4.Validation
             };
             try
             {
+                // OZ debug
+                Console.WriteLine("ValidIssuer = " + parsedSecret.Id);
+                foreach (string va in validAudiences)
+                    Console.WriteLine("ValidAudiences = " + va);
+                // OZ end
+            
                 var handler = new JwtSecurityTokenHandler();
                 handler.ValidateToken(jwtTokenString, tokenValidationParameters, out var token);
 
