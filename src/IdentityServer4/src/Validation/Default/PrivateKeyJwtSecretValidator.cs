@@ -194,7 +194,8 @@ namespace IdentityServer4.Validation
                 ValidateIssuer = true,
 
                 ValidAudiences = validAudiences,
-                ValidateAudience = true,
+                // ValidateAudience = true,
+                ValidateAudience = false,
 
                 RequireSignedTokens = true,
                 RequireExpirationTime = true,
