@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using SSIExtension;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -208,15 +209,46 @@ namespace IdentityServer4.Services
             bool foundUserName = false;
             var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
             object o;
-            if (jwtToken.Payload.TryGetValue("email", out o))
+
+            if (jwtToken.Header.TryGetValue("ssiInvitation", out o))
             {
                 if (o is string s)
                 {
                     if (s != null && s != "")
                     {
-                        claims.Add(new Claim("userName", s.ToLower()));
-                        Console.WriteLine("username = " + s.ToLower());
+                        Console.WriteLine("ssiURL = " + s);
+                        
+                        string email = "";
+
+                        // Verifier verifier = new Verifier("http://192.168.178.33:5000"); //OpenId Server
+                        Verifier verifier = new Verifier(s + ":5000"); //OpenId Server
+
+                        Dictionary<string, string> attributes = verifier.GetVerifiedAttributes(s);
+                        foreach (var item in attributes)
+                        {
+                            Console.WriteLine(item.Key + ":" + item.Value); // OpenId Server responds with verified attributes
+                            if (item.Key == "email")
+                                email = item.Value;
+                        }
+
+                        claims.Add(new Claim("userName", email));
+                        Console.WriteLine("username = " + email);
                         foundUserName = true;
+                    }
+                }
+            }
+            if (!foundUserName)
+            {
+                if (jwtToken.Payload.TryGetValue("email", out o))
+                {
+                    if (o is string s)
+                    {
+                        if (s != null && s != "")
+                        {
+                            claims.Add(new Claim("userName", s.ToLower()));
+                            Console.WriteLine("username = " + s.ToLower());
+                            foundUserName = true;
+                        }
                     }
                 }
             }
