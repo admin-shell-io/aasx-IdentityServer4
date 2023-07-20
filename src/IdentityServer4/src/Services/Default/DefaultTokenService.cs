@@ -314,6 +314,31 @@ namespace IdentityServer4.Services
                     }
                 }
             }
+            //// Add claims for indirect singing of policies for the requested resource
+            //// More details here: https://github.com/boschresearch/py-cx-ids/tree/main/pycxids/ptt#via-daps
+            if (jwtToken.Payload.TryGetValue("policy", out o))
+            {
+                if (o is string s)
+                {
+                    if (s != null && s != "")
+                    {
+                        claims.Add(new Claim("policy", s.ToLower()));
+                        Console.WriteLine("policy = " + s.ToLower());
+                    }
+                }
+            }
+            if (jwtToken.Payload.TryGetValue("policyRequestedResource", out o))
+            {
+                if (o is string s)
+                {
+                    if (s != null && s != "")
+                    {
+                        claims.Add(new Claim("policyRequestedResource", s.ToLower()));
+                        Console.WriteLine("policyRequestedResource = " + s.ToLower());
+                    }
+                }
+            }
+
             //// claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
             claims.Add(new Claim("serverName", "identityserver.test.rsa"));
 
