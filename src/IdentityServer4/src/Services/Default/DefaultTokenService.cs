@@ -322,8 +322,8 @@ namespace IdentityServer4.Services
                 {
                     if (s != null && s != "")
                     {
-                        claims.Add(new Claim("policy", s.ToLower()));
-                        Console.WriteLine("policy = " + s.ToLower());
+                        claims.Add(new Claim("policy", s));
+                        Console.WriteLine("policy = " + s);
                     }
                 }
             }
@@ -333,8 +333,8 @@ namespace IdentityServer4.Services
                 {
                     if (s != null && s != "")
                     {
-                        claims.Add(new Claim("policyRequestedResource", s.ToLower()));
-                        Console.WriteLine("policyRequestedResource = " + s.ToLower());
+                        claims.Add(new Claim("policyRequestedResource", s));
+                        Console.WriteLine("policyRequestedResource = " + s);
                     }
                 }
             }
