@@ -262,6 +262,7 @@ namespace IdentityServer4.Services
 
                         if (x5c != null)
                         {
+                            claims.Add(new Claim("certificate", x5c[0]));
                             Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
                             var x509 = new X509Certificate2(certFileBytes);
                             if (x509.Issuer.ToLower().Contains("phoenix contact"))
