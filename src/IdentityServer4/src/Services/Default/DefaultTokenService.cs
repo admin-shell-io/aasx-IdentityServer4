@@ -206,9 +206,22 @@ namespace IdentityServer4.Services
                 claims.Add(new Claim(JwtClaimTypes.SessionId, request.ValidatedRequest.SessionId));
             }
             // oz
+
             bool foundUserName = false;
             var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
             object o;
+            if (jwtToken.Header.TryGetValue("x5c", out o))
+            {
+                if (o is JArray)
+                {
+                    string[] x5c = (o as JArray).ToObject<string[]>();
+
+                    if (x5c != null)
+                    {
+                        claims.Add(new Claim("certificate", x5c[0]));
+                    }
+                }
+            }
 
             if (jwtToken.Header.TryGetValue("ssiInvitation", out o))
             {
@@ -262,7 +275,6 @@ namespace IdentityServer4.Services
 
                         if (x5c != null)
                         {
-                            claims.Add(new Claim("certificate", x5c[0]));
                             Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
                             var x509 = new X509Certificate2(certFileBytes);
                             if (x509.Issuer.ToLower().Contains("phoenix contact"))
