@@ -352,18 +352,18 @@ namespace IdentityServer4.Services
                                                         if (s.Contains("rfc822-name="))
                                                         {
                                                             var s2 = s.Split("rfc822-name=");
-                                                            if (s2.Count > 0)
+                                                            if (s2.Length > 0)
                                                             {
-                                                                var e = s2[s2.Count - 1];
+                                                                var e = s2[s2.Length - 1];
                                                                 email = e.Replace("festo.com", "de.festo.com");
                                                             }
                                                         }
                                                         if (s.Contains("email:"))
                                                         {
                                                             var s2 = s.Split("email:");
-                                                            if (s2.Count > 0)
+                                                            if (s2.Length > 0)
                                                             {
-                                                                var e = s2[s2.Count - 1];
+                                                                var e = s2[s2.Length - 1];
                                                                 email = e.Replace("festo.com", "de.festo.com");
                                                             }
                                                         }
