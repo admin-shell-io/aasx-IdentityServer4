@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
@@ -347,8 +348,8 @@ namespace IdentityServer4.Services
                                                     {
                                                         if (s.Contains("rfc822-name="))
                                                         {
-                                                            s = s.Replace("rfc822-name=", "");
-                                                            string email = s.Replace("festo.com", "de.festo.com");
+                                                            var e = s.Replace("rfc822-name=", "");
+                                                            string email = e.Replace("festo.com", "de.festo.com");
                                                             claims.Add(new Claim("userName", email));
                                                             Console.WriteLine("username = " + email);
                                                             foundUserName = true;
