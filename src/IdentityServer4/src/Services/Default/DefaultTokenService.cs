@@ -318,9 +318,10 @@ namespace IdentityServer4.Services
                                 {
                                     Console.WriteLine("X509 with festo");
                                     string email = "";
-                                    string subject = x509.Subject.Substring(3);
-                                    if (subject != "")
+                                    string subject = x509.Subject;
+                                    if (subject != null && subject.Length >= 3)
                                     {
+                                        subject = x509.Subject.Substring(3);
                                         Console.WriteLine("with subject");
                                         email = subject + "@de.festo.com";
                                         email = email.ToLower();
