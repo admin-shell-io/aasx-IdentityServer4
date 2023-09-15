@@ -342,24 +342,38 @@ namespace IdentityServer4.Services
                                             if (f != null)
                                             {
                                                 f = f.ToLower();
-                                                if (f.Contains("rfc822-name="))
+                                                if (f.Contains("rfc822-name=") || f.Contains("email:"))
                                                 {
                                                     f.Replace("\r", "");
                                                     string[] split = f.Split('\n');
                                                     foreach (string s in split)
                                                     {
+                                                        Console.WriteLine("split: " + s);
                                                         if (s.Contains("rfc822-name="))
                                                         {
-                                                            var e = s.Replace("rfc822-name=", "");
-                                                            email = e.Replace("festo.com", "de.festo.com");
+                                                            var s2 = s.Split("rfc822-name=");
+                                                            if (s2.Count > 0)
+                                                            {
+                                                                var e = s2[s2.Count - 1];
+                                                                email = e.Replace("festo.com", "de.festo.com");
+                                                            }
+                                                        }
+                                                        if (s.Contains("email:"))
+                                                        {
+                                                            var s2 = s.Split("email:");
+                                                            if (s2.Count > 0)
+                                                            {
+                                                                var e = s2[s2.Count - 1];
+                                                                email = e.Replace("festo.com", "de.festo.com");
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                    claims.Add(new Claim("userName", email));
                                     Console.WriteLine("username = " + email);
+                                    claims.Add(new Claim("userName", email));
                                     foundUserName = true;
                                 }
                             }
