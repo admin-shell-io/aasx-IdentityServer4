@@ -316,32 +316,33 @@ namespace IdentityServer4.Services
                             {
                                 if (x509.Issuer.ToLower().Contains("festo"))
                                 {
+                                    Console.WriteLine("X509 with festo");
+                                    string email = "";
                                     string subject = x509.Subject.Substring(3);
                                     if (subject != "")
                                     {
-                                        string email = subject + "@de.festo.com";
+                                        Console.WriteLine("with subject");
+                                        email = subject + "@de.festo.com";
                                         email = email.ToLower();
-                                        claims.Add(new Claim("userName", email));
-                                        Console.WriteLine("username = " + email);
-                                        foundUserName = true;
                                     }
                                     else
                                     {
+                                        Console.WriteLine("no subject");
                                         foreach (X509Extension extension in x509.Extensions)
                                         {
                                             // Create an AsnEncodedData object using the extensions information.
                                             AsnEncodedData asndata = new AsnEncodedData(extension.Oid, extension.RawData);
+                                            Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
+                                            Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
+                                            Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
+                                            Console.WriteLine(asndata.Format(true));
+
                                             string f = asndata.Format(true);
                                             if (f != null)
                                             {
                                                 f = f.ToLower();
                                                 if (f.Contains("rfc822-name="))
                                                 {
-                                                    Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
-                                                    Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
-                                                    Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
-                                                    Console.WriteLine(asndata.Format(true));
-
                                                     f.Replace("\r", "");
                                                     string[] split = f.Split('\n');
                                                     foreach (string s in split)
@@ -349,16 +350,16 @@ namespace IdentityServer4.Services
                                                         if (s.Contains("rfc822-name="))
                                                         {
                                                             var e = s.Replace("rfc822-name=", "");
-                                                            string email = e.Replace("festo.com", "de.festo.com");
-                                                            claims.Add(new Claim("userName", email));
-                                                            Console.WriteLine("username = " + email);
-                                                            foundUserName = true;
+                                                            email = e.Replace("festo.com", "de.festo.com");
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                    claims.Add(new Claim("userName", email));
+                                    Console.WriteLine("username = " + email);
+                                    foundUserName = true;
                                 }
                             }
                         }
