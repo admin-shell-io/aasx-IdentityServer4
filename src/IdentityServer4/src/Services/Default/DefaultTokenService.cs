@@ -211,6 +211,7 @@ namespace IdentityServer4.Services
             bool foundUserName = false;
             var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
             object o;
+            Console.WriteLine("jwtToken");
             if (jwtToken.Header.TryGetValue("x5c", out o))
             {
                 if (o is JArray)
@@ -224,6 +225,7 @@ namespace IdentityServer4.Services
                 }
             }
 
+            Console.WriteLine("ssiInvitation");
             if (jwtToken.Header.TryGetValue("ssiInvitation", out o))
             {
                 if (o is string s)
@@ -253,6 +255,7 @@ namespace IdentityServer4.Services
             }
             if (!foundUserName)
             {
+                Console.WriteLine("jwtToken email");
                 if (jwtToken.Payload.TryGetValue("email", out o))
                 {
                     if (o is string s)
@@ -268,6 +271,7 @@ namespace IdentityServer4.Services
             }
             if (!foundUserName)
             {
+                Console.WriteLine("jwtToken x5c");
                 if (jwtToken.Header.TryGetValue("x5c", out o))
                 {
                     if (o is JArray)
@@ -277,12 +281,14 @@ namespace IdentityServer4.Services
                         if (x5c != null)
                         {
                             Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
+                            Console.WriteLine("x509");
                             var x509 = new X509Certificate2(certFileBytes);
+                            Console.WriteLine("x509 loaded");
                             string emailName = x509.GetNameInfo(X509NameType.EmailName, false);
                             if (!string.IsNullOrEmpty(emailName))
                             {
-                                claims.Add(new Claim("userName", emailName));
                                 Console.WriteLine("username = " + emailName);
+                                claims.Add(new Claim("userName", emailName));
                                 foundUserName = true;
                             }
                             if (!foundUserName)
