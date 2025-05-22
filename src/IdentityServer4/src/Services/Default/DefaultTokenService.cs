@@ -278,24 +278,34 @@ namespace IdentityServer4.Services
                         {
                             Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
                             var x509 = new X509Certificate2(certFileBytes);
-                            if (x509.Issuer.ToLower().Contains("phoenix contact"))
+                            string emailName = x509.GetNameInfo(X509NameType.EmailName, false);
+                            if (!string.IsNullOrEmpty(emailName))
                             {
-                                string subject = x509.Subject.Substring(4);
-                                string[] split1 = subject.Split("(");
-                                if (split1.Length == 2)
+                                claims.Add(new Claim("userName", emailName));
+                                Console.WriteLine("username = " + emailName);
+                                foundUserName = true;
+                            }
+                            if (!foundUserName)
+                            {
+                                if (x509.Issuer.ToLower().Contains("phoenix contact"))
                                 {
-                                    string[] split2 = split1[0].Split(",");
-                                    if (split2.Length == 2)
+                                    string subject = x509.Subject.Substring(4);
+                                    string[] split1 = subject.Split("(");
+                                    if (split1.Length == 2)
                                     {
-                                        string email = split2[1].Substring(1, 1) + split2[0] + "@phoenixcontact.com";
-                                        email = email.ToLower();
-                                        email = email.Replace("ä", "ae");
-                                        email = email.Replace("ö", "oe");
-                                        email = email.Replace("ü", "ue");
-                                        email = email.Replace("ß", "ss");
-                                        claims.Add(new Claim("userName", email));
-                                        Console.WriteLine("username = " + email);
-                                        foundUserName = true;
+                                        string[] split2 = split1[0].Split(",");
+                                        if (split2.Length == 2)
+                                        {
+                                            string email = split2[1].Substring(1, 1) + split2[0] + "@phoenixcontact.com";
+                                            email = email.ToLower();
+                                            email = email.Replace("ä", "ae");
+                                            email = email.Replace("ö", "oe");
+                                            email = email.Replace("ü", "ue");
+                                            email = email.Replace("ß", "ss");
+                                            claims.Add(new Claim("userName", email));
+                                            Console.WriteLine("username = " + email);
+                                            foundUserName = true;
+                                        }
                                     }
                                 }
                             }
