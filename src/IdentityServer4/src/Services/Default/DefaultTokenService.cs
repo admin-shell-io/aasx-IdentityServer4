@@ -287,14 +287,52 @@ namespace IdentityServer4.Services
                             string emailName = x509.GetNameInfo(X509NameType.EmailName, false);
                             if (!string.IsNullOrEmpty(emailName))
                             {
+                                Console.WriteLine("emailName");
                                 Console.WriteLine("username = " + emailName);
                                 claims.Add(new Claim("userName", emailName));
                                 foundUserName = true;
                             }
                             if (!foundUserName)
                             {
+                                Console.WriteLine("extension");
+                                foreach (X509Extension extension in x509.Extensions)
+                                {
+                                    // Create an AsnEncodedData object using the extensions information.
+                                    AsnEncodedData asndata = new AsnEncodedData(extension.Oid, extension.RawData);
+                                    string f = asndata.Format(true);
+                                    if (f != null)
+                                    {
+                                        f = f.ToLower();
+                                        if (f.Contains("rfc822-name="))
+                                        {
+                                            // RFC822-Name=christian.barth@festo.com
+                                            Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
+                                            Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
+                                            Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
+                                            Console.WriteLine(asndata.Format(true));
+                                
+                                            f.Replace("\r", "");
+                                            string[] split = f.Split('\n');
+                                            foreach (string s in split)
+                                            {
+                                                if (s.Contains("rfc822-name="))
+                                                {
+                                                    emailName = s.Replace("rfc822-name=", "");
+                                                    Console.WriteLine("emailName");
+                                                    Console.WriteLine("username = " + emailName);
+                                                    claims.Add(new Claim("userName", emailName));
+                                                    foundUserName = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (!foundUserName)
+                            {
                                 if (x509.Issuer.ToLower().Contains("phoenix contact"))
                                 {
+                                    Console.WriteLine("phoenix");
                                     string subject = x509.Subject.Substring(4);
                                     string[] split1 = subject.Split("(");
                                     if (split1.Length == 2)
@@ -319,6 +357,7 @@ namespace IdentityServer4.Services
                             {
                                 if (x509.Issuer.ToLower().Contains("bosch") )
                                 {
+                                    Console.WriteLine("bosch");
                                     string subject = x509.Subject.Substring(3);
                                     string[] split1 = subject.Split(",");
                                     string email = split1[0] + "@de.bosch.com";
@@ -332,6 +371,7 @@ namespace IdentityServer4.Services
                             {
                                 if (x509.Issuer.ToLower().Contains("festo"))
                                 {
+                                    Console.WriteLine("festo");
                                     Console.WriteLine("X509 with festo");
                                     string email = "";
                                     string subject = x509.Subject;
