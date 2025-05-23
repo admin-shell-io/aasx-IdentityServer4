@@ -164,6 +164,21 @@ namespace IdentityServer4.Validation
                         {
                             Console.WriteLine("ERROR: Certificate " + x509.Subject + " not valid!");
                             _logger.LogError("Certificate " + x509.Subject + " not valid!");
+
+                            foreach (X509ChainStatus status in c.ChainStatus)
+                            {
+                                Console.WriteLine($"Chain error: {status.Status} - {status.StatusInformation}");
+                            }
+                    
+                            foreach (X509ChainElement element in c.ChainElements)
+                            {
+                                Console.WriteLine($"Certificate: {element.Certificate.Subject}");
+                                foreach (X509ChainStatus status in element.ChainElementStatus)
+                                {
+                                    Console.WriteLine($"  Status: {status.Status} - {status.StatusInformation}");
+                                }
+                            }
+
                             return fail;
                         }
 
