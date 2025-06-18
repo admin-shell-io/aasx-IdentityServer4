@@ -62,7 +62,11 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.Configure(setupAction);
             Console.WriteLine("services.AddIdentityServer 1");
-            return services.AddIdentityServer();
+            return services.AddIdentityServer(options =>
+            {
+                options.IssuerUri = "https://admin-shell-io.com/50001";
+            }
+            );
         }
 
         /// <summary>
@@ -75,7 +79,11 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.Configure<IdentityServerOptions>(configuration);
             Console.WriteLine("services.AddIdentityServer 2");
-            return services.AddIdentityServer();
+            return services.AddIdentityServer(options =>
+            {
+                options.IssuerUri = "https://admin-shell-io.com/50001";
+            }
+            );
         }
 
         /// <summary>
