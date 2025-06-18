@@ -61,6 +61,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IIdentityServerBuilder AddIdentityServer(this IServiceCollection services, Action<IdentityServerOptions> setupAction)
         {
             services.Configure(setupAction);
+            Console.WriteLine("services.AddIdentityServer 1");
             return services.AddIdentityServer();
         }
 
@@ -73,6 +74,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IIdentityServerBuilder AddIdentityServer(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<IdentityServerOptions>(configuration);
+            Console.WriteLine("services.AddIdentityServer 2");
             return services.AddIdentityServer();
         }
 
