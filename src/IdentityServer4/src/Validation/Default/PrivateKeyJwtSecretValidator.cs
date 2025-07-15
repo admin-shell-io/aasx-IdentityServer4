@@ -91,6 +91,15 @@ namespace IdentityServer4.Validation
 
             // OZ
 
+            var entraid = "";
+            var entraidClaim = jwtToken.Claims.Where(c => c.Type == "entraid");
+            if (entraidClaim != null && entraidClaim.Any())
+            {
+                entraid = entraidClaim.First().Value;
+                jwtToken = new JwtSecurityToken(entraid);
+                Console.WriteLine("Received entraid token: " + jwtToken);
+            }
+
             var iss = "";
             var issClaim = jwtToken.Claims.Where(c => c.Type == "iss");
             if (issClaim != null && issClaim.Any())

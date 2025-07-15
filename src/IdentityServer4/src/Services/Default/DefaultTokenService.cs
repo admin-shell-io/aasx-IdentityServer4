@@ -206,11 +206,21 @@ namespace IdentityServer4.Services
             {
                 claims.Add(new Claim(JwtClaimTypes.SessionId, request.ValidatedRequest.SessionId));
             }
+
             // oz
 
             bool foundUserName = false;
             var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
-            Console.WriteLine("jwtToken");
+            Console.WriteLine("jwtToken: " + jwtToken);
+
+            var entraid = "";
+            var entraidClaim = jwtToken.Claims.Where(c => c.Type == "entraid");
+            if (entraidClaim != null && entraidClaim.Any())
+            {
+                entraid = entraidClaim.First().Value;
+                jwtToken = new JwtSecurityToken(entraid);
+                Console.WriteLine("Replaced by entraid token: " + jwtToken);
+            }
 
             var iss = "";
             var issClaim = jwtToken.Claims.Where(c => c.Type == "iss");
