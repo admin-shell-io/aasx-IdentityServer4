@@ -210,68 +210,32 @@ namespace IdentityServer4.Services
 
             bool foundUserName = false;
             var jwtToken = new JwtSecurityToken((string) request.ValidatedRequest.Secret.Credential);
-            object o;
             Console.WriteLine("jwtToken");
-            if (jwtToken.Header.TryGetValue("x5c", out o))
-            {
-                if (o is JArray)
-                {
-                    string[] x5c = (o as JArray).ToObject<string[]>();
 
-                    if (x5c != null)
-                    {
-                        claims.Add(new Claim("certificate", x5c[0]));
-                    }
-                }
+            var iss = "";
+            var issClaim = jwtToken.Claims.Where(c => c.Type == "iss");
+            if (issClaim != null && issClaim.Any())
+            {
+                iss = issClaim.First().Value;
             }
 
-            Console.WriteLine("ssiInvitation");
-            if (jwtToken.Header.TryGetValue("ssiInvitation", out o))
+            if (!string.IsNullOrEmpty(iss) && iss.StartsWith("https://login.microsoftonline.com"))
             {
-                if (o is string s)
+                var emailClaim = jwtToken.Claims.Where(c => c.Type == "email");
+                if (emailClaim != null && emailClaim.Any())
                 {
-                    if (s != null && s != "")
+                    string email = emailClaim.First().Value;
+                    if (!string.IsNullOrEmpty(email))
                     {
-                        Console.WriteLine("ssiURL = " + s);
-                        
-                        string email = "";
-
-                        // Verifier verifier = new Verifier("http://192.168.178.33:5000"); //OpenId Server
-                        Verifier verifier = new Verifier(s + ":5000"); //OpenId Server
-
-                        Dictionary<string, string> attributes = verifier.GetVerifiedAttributes(s);
-                        foreach (var item in attributes)
-                        {
-                            Console.WriteLine(item.Key + ":" + item.Value); // OpenId Server responds with verified attributes
-                            if (item.Key == "email")
-                                email = item.Value;
-                        }
-
-                        claims.Add(new Claim("userName", email));
+                        Console.WriteLine("Entra ID");
                         Console.WriteLine("username = " + email);
-                        foundUserName = true;
+                        claims.Add(new Claim("userName", email));
                     }
                 }
             }
-            if (!foundUserName)
+            else
             {
-                Console.WriteLine("jwtToken email");
-                if (jwtToken.Payload.TryGetValue("email", out o))
-                {
-                    if (o is string s)
-                    {
-                        if (s != null && s != "")
-                        {
-                            claims.Add(new Claim("userName", s.ToLower()));
-                            Console.WriteLine("username = " + s.ToLower());
-                            foundUserName = true;
-                        }
-                    }
-                }
-            }
-            if (!foundUserName)
-            {
-                Console.WriteLine("jwtToken x5c");
+                object o;
                 if (jwtToken.Header.TryGetValue("x5c", out o))
                 {
                     if (o is JArray)
@@ -280,184 +244,245 @@ namespace IdentityServer4.Services
 
                         if (x5c != null)
                         {
-                            Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
-                            Console.WriteLine("x509");
-                            var x509 = new X509Certificate2(certFileBytes);
-                            Console.WriteLine("x509 loaded");
-                            string emailName = x509.GetNameInfo(X509NameType.EmailName, false);
-                            if (!string.IsNullOrEmpty(emailName))
+                            claims.Add(new Claim("certificate", x5c[0]));
+                        }
+                    }
+                }
+
+                Console.WriteLine("ssiInvitation");
+                if (jwtToken.Header.TryGetValue("ssiInvitation", out o))
+                {
+                    if (o is string s)
+                    {
+                        if (s != null && s != "")
+                        {
+                            Console.WriteLine("ssiURL = " + s);
+
+                            string email = "";
+
+                            // Verifier verifier = new Verifier("http://192.168.178.33:5000"); //OpenId Server
+                            Verifier verifier = new Verifier(s + ":5000"); //OpenId Server
+
+                            Dictionary<string, string> attributes = verifier.GetVerifiedAttributes(s);
+                            foreach (var item in attributes)
                             {
-                                Console.WriteLine("emailName");
-                                Console.WriteLine("username = " + emailName);
-                                claims.Add(new Claim("userName", emailName));
+                                Console.WriteLine(item.Key + ":" + item.Value); // OpenId Server responds with verified attributes
+                                if (item.Key == "email")
+                                    email = item.Value;
+                            }
+
+                            claims.Add(new Claim("userName", email));
+                            Console.WriteLine("username = " + email);
+                            foundUserName = true;
+                        }
+                    }
+                }
+                if (!foundUserName)
+                {
+                    Console.WriteLine("jwtToken email");
+                    if (jwtToken.Payload.TryGetValue("email", out o))
+                    {
+                        if (o is string s)
+                        {
+                            if (s != null && s != "")
+                            {
+                                claims.Add(new Claim("userName", s.ToLower()));
+                                Console.WriteLine("username = " + s.ToLower());
                                 foundUserName = true;
                             }
-                            if (!foundUserName)
+                        }
+                    }
+                }
+                if (!foundUserName)
+                {
+                    Console.WriteLine("jwtToken x5c");
+                    if (jwtToken.Header.TryGetValue("x5c", out o))
+                    {
+                        if (o is JArray)
+                        {
+                            string[] x5c = (o as JArray).ToObject<string[]>();
+
+                            if (x5c != null)
                             {
-                                Console.WriteLine("extension");
-                                foreach (X509Extension extension in x509.Extensions)
+                                Byte[] certFileBytes = Convert.FromBase64String(x5c[0]);
+                                Console.WriteLine("x509");
+                                var x509 = new X509Certificate2(certFileBytes);
+                                Console.WriteLine("x509 loaded");
+                                string emailName = x509.GetNameInfo(X509NameType.EmailName, false);
+                                if (!string.IsNullOrEmpty(emailName))
                                 {
-                                    // Create an AsnEncodedData object using the extensions information.
-                                    AsnEncodedData asndata = new AsnEncodedData(extension.Oid, extension.RawData);
-                                    string f = asndata.Format(true);
-                                    if (f != null)
+                                    Console.WriteLine("emailName");
+                                    Console.WriteLine("username = " + emailName);
+                                    claims.Add(new Claim("userName", emailName));
+                                    foundUserName = true;
+                                }
+                                if (!foundUserName)
+                                {
+                                    Console.WriteLine("extension");
+                                    foreach (X509Extension extension in x509.Extensions)
                                     {
-                                        f = f.ToLower();
-                                        if (f.Contains("rfc822-name="))
+                                        // Create an AsnEncodedData object using the extensions information.
+                                        AsnEncodedData asndata = new AsnEncodedData(extension.Oid, extension.RawData);
+                                        string f = asndata.Format(true);
+                                        if (f != null)
                                         {
-                                            // RFC822-Name=christian.barth@festo.com
-                                            Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
-                                            Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
-                                            Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
-                                            Console.WriteLine(asndata.Format(true));
-                                
-                                            f.Replace("\r", "");
-                                            string[] split = f.Split('\n');
-                                            foreach (string s in split)
+                                            f = f.ToLower();
+                                            if (f.Contains("rfc822-name="))
                                             {
-                                                if (s.Contains("rfc822-name="))
+                                                // RFC822-Name=christian.barth@festo.com
+                                                Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
+                                                Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
+                                                Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
+                                                Console.WriteLine(asndata.Format(true));
+
+                                                f.Replace("\r", "");
+                                                string[] split = f.Split('\n');
+                                                foreach (string s in split)
                                                 {
-                                                    emailName = s.Replace("rfc822-name=", "");
-                                                    Console.WriteLine("emailName");
-                                                    Console.WriteLine("username = " + emailName);
-                                                    claims.Add(new Claim("userName", emailName));
-                                                    foundUserName = true;
+                                                    if (s.Contains("rfc822-name="))
+                                                    {
+                                                        emailName = s.Replace("rfc822-name=", "");
+                                                        Console.WriteLine("emailName");
+                                                        Console.WriteLine("username = " + emailName);
+                                                        claims.Add(new Claim("userName", emailName));
+                                                        foundUserName = true;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            if (!foundUserName)
-                            {
-                                if (x509.Issuer.ToLower().Contains("phoenix contact"))
+                                if (!foundUserName)
                                 {
-                                    Console.WriteLine("phoenix");
-                                    string subject = x509.Subject.Substring(4);
-                                    string[] split1 = subject.Split("(");
-                                    if (split1.Length == 2)
+                                    if (x509.Issuer.ToLower().Contains("phoenix contact"))
                                     {
-                                        string[] split2 = split1[0].Split(",");
-                                        if (split2.Length == 2)
+                                        Console.WriteLine("phoenix");
+                                        string subject = x509.Subject.Substring(4);
+                                        string[] split1 = subject.Split("(");
+                                        if (split1.Length == 2)
                                         {
-                                            string email = split2[1].Substring(1, 1) + split2[0] + "@phoenixcontact.com";
-                                            email = email.ToLower();
-                                            email = email.Replace("ä", "ae");
-                                            email = email.Replace("ö", "oe");
-                                            email = email.Replace("ü", "ue");
-                                            email = email.Replace("ß", "ss");
-                                            claims.Add(new Claim("userName", email));
-                                            Console.WriteLine("username = " + email);
-                                            foundUserName = true;
+                                            string[] split2 = split1[0].Split(",");
+                                            if (split2.Length == 2)
+                                            {
+                                                string email = split2[1].Substring(1, 1) + split2[0] + "@phoenixcontact.com";
+                                                email = email.ToLower();
+                                                email = email.Replace("ä", "ae");
+                                                email = email.Replace("ö", "oe");
+                                                email = email.Replace("ü", "ue");
+                                                email = email.Replace("ß", "ss");
+                                                claims.Add(new Claim("userName", email));
+                                                Console.WriteLine("username = " + email);
+                                                foundUserName = true;
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            if (!foundUserName)
-                            {
-                                if (x509.Issuer.ToLower().Contains("bosch") )
+                                if (!foundUserName)
                                 {
-                                    Console.WriteLine("bosch");
-                                    string subject = x509.Subject.Substring(3);
-                                    string[] split1 = subject.Split(",");
-                                    string email = split1[0] + "@de.bosch.com";
-                                    email = email.ToLower();
-                                    claims.Add(new Claim("userName", email));
-                                    Console.WriteLine("username = " + email);
-                                    foundUserName = true;
-                                }
-                            }
-                            if (!foundUserName)
-                            {
-                                if (x509.Issuer.ToLower().Contains("festo"))
-                                {
-                                    Console.WriteLine("festo");
-                                    Console.WriteLine("X509 with festo");
-                                    string email = "";
-                                    string subject = x509.Subject;
-                                    if (subject != null && subject.Length >= 3)
+                                    if (x509.Issuer.ToLower().Contains("bosch"))
                                     {
-                                        subject = x509.Subject.Substring(3);
-                                        Console.WriteLine("with subject");
-                                        email = subject + "@de.festo.com";
+                                        Console.WriteLine("bosch");
+                                        string subject = x509.Subject.Substring(3);
+                                        string[] split1 = subject.Split(",");
+                                        string email = split1[0] + "@de.bosch.com";
                                         email = email.ToLower();
+                                        claims.Add(new Claim("userName", email));
+                                        Console.WriteLine("username = " + email);
+                                        foundUserName = true;
                                     }
-                                    else
+                                }
+                                if (!foundUserName)
+                                {
+                                    if (x509.Issuer.ToLower().Contains("festo"))
                                     {
-                                        Console.WriteLine("no subject");
-                                        foreach (X509Extension extension in x509.Extensions)
+                                        Console.WriteLine("festo");
+                                        Console.WriteLine("X509 with festo");
+                                        string email = "";
+                                        string subject = x509.Subject;
+                                        if (subject != null && subject.Length >= 3)
                                         {
-                                            // Create an AsnEncodedData object using the extensions information.
-                                            AsnEncodedData asndata = new AsnEncodedData(extension.Oid, extension.RawData);
-                                            Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
-                                            Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
-                                            Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
-                                            Console.WriteLine(asndata.Format(true));
-
-                                            string f = asndata.Format(true);
-                                            if (f != null)
+                                            subject = x509.Subject.Substring(3);
+                                            Console.WriteLine("with subject");
+                                            email = subject + "@de.festo.com";
+                                            email = email.ToLower();
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("no subject");
+                                            foreach (X509Extension extension in x509.Extensions)
                                             {
-                                                f = f.ToLower();
-                                                if (f.Contains("rfc822-name=") || f.Contains("email:"))
+                                                // Create an AsnEncodedData object using the extensions information.
+                                                AsnEncodedData asndata = new AsnEncodedData(extension.Oid, extension.RawData);
+                                                Console.WriteLine("Extension type: {0}", extension.Oid.FriendlyName);
+                                                Console.WriteLine("Oid value: {0}", asndata.Oid.Value);
+                                                Console.WriteLine("Raw data length: {0} {1}", asndata.RawData.Length, Environment.NewLine);
+                                                Console.WriteLine(asndata.Format(true));
+
+                                                string f = asndata.Format(true);
+                                                if (f != null)
                                                 {
-                                                    f.Replace("\r", "");
-                                                    string[] split = f.Split('\n');
-                                                    foreach (string s in split)
+                                                    f = f.ToLower();
+                                                    if (f.Contains("rfc822-name=") || f.Contains("email:"))
                                                     {
-                                                        Console.WriteLine("split: " + s);
-                                                        if (s.Contains("rfc822-name="))
+                                                        f.Replace("\r", "");
+                                                        string[] split = f.Split('\n');
+                                                        foreach (string s in split)
                                                         {
-                                                            var s2 = s.Split("rfc822-name=");
-                                                            if (s2.Length > 0)
+                                                            Console.WriteLine("split: " + s);
+                                                            if (s.Contains("rfc822-name="))
                                                             {
-                                                                var e = s2[s2.Length - 1];
-                                                                email = e.Replace("festo.com", "de.festo.com");
+                                                                var s2 = s.Split("rfc822-name=");
+                                                                if (s2.Length > 0)
+                                                                {
+                                                                    var e = s2[s2.Length - 1];
+                                                                    email = e.Replace("festo.com", "de.festo.com");
+                                                                }
                                                             }
-                                                        }
-                                                        if (s.Contains("email:"))
-                                                        {
-                                                            var s2 = s.Split("email:");
-                                                            if (s2.Length > 0)
+                                                            if (s.Contains("email:"))
                                                             {
-                                                                var e = s2[s2.Length - 1];
-                                                                email = e.Replace("festo.com", "de.festo.com");
+                                                                var s2 = s.Split("email:");
+                                                                if (s2.Length > 0)
+                                                                {
+                                                                    var e = s2[s2.Length - 1];
+                                                                    email = e.Replace("festo.com", "de.festo.com");
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
+                                        Console.WriteLine("username = " + email);
+                                        claims.Add(new Claim("userName", email));
+                                        foundUserName = true;
                                     }
-                                    Console.WriteLine("username = " + email);
-                                    claims.Add(new Claim("userName", email));
-                                    foundUserName = true;
                                 }
                             }
                         }
                     }
                 }
-            }
-            //// Add claims for indirect singing of policies for the requested resource
-            //// More details here: https://github.com/boschresearch/py-cx-ids/tree/main/pycxids/ptt#via-daps
-            if (jwtToken.Payload.TryGetValue("policy", out o))
-            {
-                if (o is string s)
+                //// Add claims for indirect singing of policies for the requested resource
+                //// More details here: https://github.com/boschresearch/py-cx-ids/tree/main/pycxids/ptt#via-daps
+                if (jwtToken.Payload.TryGetValue("policy", out o))
                 {
-                    if (s != null && s != "")
+                    if (o is string s)
                     {
-                        claims.Add(new Claim("policy", s));
-                        Console.WriteLine("policy = " + s);
+                        if (s != null && s != "")
+                        {
+                            claims.Add(new Claim("policy", s));
+                            Console.WriteLine("policy = " + s);
+                        }
                     }
                 }
-            }
-            if (jwtToken.Payload.TryGetValue("policyRequestedResource", out o))
-            {
-                if (o is string s)
+                if (jwtToken.Payload.TryGetValue("policyRequestedResource", out o))
                 {
-                    if (s != null && s != "")
+                    if (o is string s)
                     {
-                        claims.Add(new Claim("policyRequestedResource", s));
-                        Console.WriteLine("policyRequestedResource = " + s);
+                        if (s != null && s != "")
+                        {
+                            claims.Add(new Claim("policyRequestedResource", s));
+                            Console.WriteLine("policyRequestedResource = " + s);
+                        }
                     }
                 }
             }
