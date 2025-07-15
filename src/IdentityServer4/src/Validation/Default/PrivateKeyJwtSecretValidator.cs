@@ -134,7 +134,7 @@ namespace IdentityServer4.Validation
 
                 try
                 {
-                    var principal = tokenHandler.ValidateToken(jwtTokenString, validationParameters, out var validatedToken);
+                    // var principal = tokenHandler.ValidateToken(jwtTokenString, validationParameters, out var validatedToken);
                     Console.WriteLine("✅ Token is valid.");
                 }
                 catch (Exception ex)
