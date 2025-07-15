@@ -20,6 +20,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
+using System.Net.Http;
 
 namespace IdentityServer4.Validation
 {
@@ -89,6 +90,52 @@ namespace IdentityServer4.Validation
             var jwtToken = new JwtSecurityToken(jwtTokenString);
 
             // OZ
+
+            var iss = "";
+            var issClaim = jwtToken.Claims.Where(c => c.Type == "iss");
+            if (issClaim != null && issClaim.Any())
+            {
+                iss = issClaim.First().Value;
+            }
+
+            if (!string.IsNullOrEmpty(iss) && iss.StartsWith("https://login.microsoftonline.com"))
+            {
+                var clientId = "865f6ac0-cdbc-44c6-98cc-3e35c39ecb6e";
+                var tenantId = jwtToken.Claims
+                    .First(c => c.Type == "tid").Value;
+
+                var jwksUrl = $"https://login.microsoftonline.com/{tenantId}/discovery/v2.0/keys";
+                Console.WriteLine("Entra ID: " + jwksUrl);
+                using var httpClient = new HttpClient();
+                var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
+                var jwks = new JsonWebKeySet(jwksJson);
+                var signingKeys = jwks.GetSigningKeys();
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = $"https://login.microsoftonline.com/{tenantId}/v2.0",
+                    ValidateAudience = true,
+                    ValidAudience = clientId,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeys = signingKeys
+                };
+
+                try
+                {
+                    var principal = tokenHandler.ValidateToken(jwtTokenString, validationParameters, out var validatedToken);
+                    Console.WriteLine("✅ Token is valid.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Token validation failed: {ex.Message}");
+                    return fail;
+                }
+                return success;
+            }
+
             // var x5c = jwtToken.Payload.Claims.FirstOrDefault(c => c.Type == "x5c")?.Value;
             // string x5c = jwtToken.Header.GetValueOrDefault("x5c");
             Console.WriteLine("Client Token:\n" + jwtTokenString + "\n");
