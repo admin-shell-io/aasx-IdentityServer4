@@ -47,6 +47,7 @@ namespace IdentityServerHost
                 foreach (var line in lines)
                 {
                     IdentityServer4.ResponseHandling.DiscoveryResponseGenerator.TrustedEntraIssuers.Add(line);
+                    Console.WriteLine("Security 1.1 Add " + line);
                 }
             }
 
