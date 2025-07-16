@@ -91,12 +91,11 @@ namespace IdentityServer4.Validation
 
             // OZ
 
-            var entraid = "";
             var entraidClaim = jwtToken.Claims.Where(c => c.Type == "entraid");
             if (entraidClaim != null && entraidClaim.Any())
             {
-                entraid = entraidClaim.First().Value;
-                jwtToken = new JwtSecurityToken(entraid);
+                jwtTokenString = entraidClaim.First().Value;
+                jwtToken = new JwtSecurityToken(jwtTokenString);
                 Console.WriteLine("Received entraid token: " + jwtToken);
             }
 
