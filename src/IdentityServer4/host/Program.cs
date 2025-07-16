@@ -13,6 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.IO;
 using Microsoft.Extensions.Primitives;
+using System.Runtime.ConstrainedExecution;
 
 namespace IdentityServerHost
 {
@@ -38,6 +39,15 @@ namespace IdentityServerHost
                 Console.WriteLine("Security 1.1 Add " + f.Name);
 
                 IdentityServer4.ResponseHandling.DiscoveryResponseGenerator.RootCertSubjects.Add(cert.Subject);
+            }
+
+            if (File.Exists("./TrustedEntraIssuers.dat"))
+            {
+                var lines = File.ReadLines("./TrustedEntraIssuers.dat");
+                foreach (var line in lines)
+                {
+                    IdentityServer4.ResponseHandling.DiscoveryResponseGenerator.TrustedEntraIssuers.Add(line);
+                }
             }
 
             Directory.CreateDirectory("./temp");

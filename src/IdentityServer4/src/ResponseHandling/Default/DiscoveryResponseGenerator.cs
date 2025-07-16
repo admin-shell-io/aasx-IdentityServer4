@@ -31,6 +31,11 @@ namespace IdentityServer4.ResponseHandling
         public static List<string> RootCertSubjects = new List<string>();
 
         /// <summary>
+        /// show root cert
+        /// </summary>
+        public static List<string> TrustedEntraIssuers = new List<string>();
+
+        /// <summary>
         /// The options
         /// </summary>
         protected readonly IdentityServerOptions Options;
@@ -367,6 +372,9 @@ namespace IdentityServer4.ResponseHandling
             // OZ
             if (RootCertSubjects.Count != 0)
                 entries.Add("rootCertSubjects", RootCertSubjects);
+
+            if (TrustedEntraIssuers.Count != 0)
+                entries.Add("trustedEntraIssuers", TrustedEntraIssuers);
 
             return entries;
         }

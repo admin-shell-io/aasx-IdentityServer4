@@ -114,6 +114,22 @@ namespace IdentityServer4.Validation
 
                 var jwksUrl = $"https://login.microsoftonline.com/{tenantId}/discovery/v2.0/keys";
                 Console.WriteLine("Entra ID: " + jwksUrl);
+
+                var trusted = false;
+                if (File.Exists("./TrustedEntraIssuers.dat"))
+                {
+                    var lines = File.ReadLines("./TrustedEntraIssuers.dat");
+                    foreach (var line in lines)
+                    {
+                        Console.WriteLine("Trusted: "+ line);
+                        if (iss == line.Trim())
+                        {
+                            trusted = true;
+                            Console.WriteLine("iss is trusted");
+                        }
+                    }
+                }
+
                 using var httpClient = new HttpClient();
                 var jwksJson = httpClient.GetStringAsync(jwksUrl).Result;
                 var jwks = new JsonWebKeySet(jwksJson);
