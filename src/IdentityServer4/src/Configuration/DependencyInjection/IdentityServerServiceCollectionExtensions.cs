@@ -63,6 +63,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Configure(setupAction);
             Console.WriteLine("services.AddIdentityServer 1");
             var issuerUri = Environment.GetEnvironmentVariable("ISSUERURI");
+            Console.WriteLine("Env IssuerUri: ", issuerUri);
             if (issuerUri != null)
             {
                 Console.WriteLine("Env options.IssuerUri: ", issuerUri);
