@@ -1,4 +1,4 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
@@ -65,6 +65,13 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Configure<IdentityServerOptions>(options =>
             {
                 options.IssuerUri = "https://admin-shell-io.com/50001";
+                Console.WriteLine("options.IssuerUri: ", options.IssuerUri);
+                var issuerUri = Environment.GetEnvironmentVariable("ISSUERURI");
+                if (issuerUri != null)
+                {
+                    options.IssuerUri = issuerUri;
+                    Console.WriteLine("Env options.IssuerUri: ", options.IssuerUri);
+                }
             });
             return services.AddIdentityServer();
         }
