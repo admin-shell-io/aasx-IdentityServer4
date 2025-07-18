@@ -62,16 +62,18 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.Configure(setupAction);
             Console.WriteLine("services.AddIdentityServer 1");
+            var issuerUri = Environment.GetEnvironmentVariable("ISSUERURI");
+            if (issuerUri != null)
+            {
+                Console.WriteLine("Env options.IssuerUri: ", issuerUri);
+            }
+            else
+            {
+                issuerUri = "https://admin-shell-io.com/50001";
+            }
             services.Configure<IdentityServerOptions>(options =>
             {
-                options.IssuerUri = "https://admin-shell-io.com/50001";
-                Console.WriteLine("options.IssuerUri: ", options.IssuerUri);
-                var issuerUri = Environment.GetEnvironmentVariable("ISSUERURI");
-                if (issuerUri != null)
-                {
-                    options.IssuerUri = issuerUri;
-                    Console.WriteLine("Env options.IssuerUri: ", options.IssuerUri);
-                }
+                options.IssuerUri = issuerUri;
             });
             return services.AddIdentityServer();
         }
