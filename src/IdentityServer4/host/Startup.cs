@@ -137,7 +137,12 @@ namespace IdentityServerHost
             //builder.AddDeveloperSigningCredential();
 
             // use an RSA-based certificate with RS256
-            var rsaCert = new X509Certificate2("./keys/identityserver.test.rsa.p12", "changeit");
+            var certName = Environment.GetEnvironmentVariable("RSACERT");
+            if (string.IsNullOrEmpty(certName))
+            {
+                certName = "identityserver.test.rsa";
+            }
+            var rsaCert = new X509Certificate2("./keys/" + certName + ".p12", "changeit");
             builder.AddSigningCredential(rsaCert, "RS256");
 
             // ...and PS256

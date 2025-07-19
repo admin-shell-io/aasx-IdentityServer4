@@ -498,7 +498,12 @@ namespace IdentityServer4.Services
             }
 
             //// claims.Add(new Claim("userName", "aorzelski@phoenixcontact.com"));
-            claims.Add(new Claim("serverName", "identityserver.test.rsa"));
+            var certName = Environment.GetEnvironmentVariable("RSACERT");
+            if (string.IsNullOrEmpty(certName))
+            {
+                certName = "identityserver.test.rsa";
+            }
+            claims.Add(new Claim("serverName", certName));
 
             // iat claim as required by JWT profile
             claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.UtcNow.ToUnixTimeSeconds().ToString(),
