@@ -97,6 +97,16 @@ namespace IdentityServerHost
 
                 return Task.FromResult(principal);
             });
+
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                // wir brauchen sowohl X-Forwarded-For (Client IP) als auch X-Forwarded-Proto (Scheme)
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+                // leere KnownNetworks/Proxies, damit wir nicht nur localhost vertrauen müssen
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
         }
 
         public void Configure(IApplicationBuilder app)
@@ -104,10 +114,13 @@ namespace IdentityServerHost
             // use this for persisted grants store
             // app.InitializePersistedGrantsStore();
             
+            /*
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
+            */
+            app.UseForwardedHeaders();
 
             app.UseCertificateForwarding();
             app.UseCookiePolicy();
