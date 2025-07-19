@@ -142,6 +142,7 @@ namespace IdentityServerHost
             {
                 certName = "identityserver.test.rsa";
             }
+            Console.WriteLine("RSACERT: " + certName);
             var rsaCert = new X509Certificate2("./keys/" + certName + ".p12", "changeit");
             builder.AddSigningCredential(rsaCert, "RS256");
 
