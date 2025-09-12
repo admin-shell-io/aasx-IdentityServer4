@@ -83,7 +83,7 @@ namespace IdentityServerHost.Configuration
                         }
                     },
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    AllowedScopes = { "resource1.scope1", "resource2.scope1" }
+                    AllowedScopes = { "resource1.scope1", "resource2.scope1", "resource3.scope1" }
                 },
 
                 ///////////////////////////////////////////
