@@ -56,14 +56,14 @@ namespace IdentityServerHost.Configuration
             {
                 new ApiResource("resource1", "Resource 1")
                 {
-                    ApiSecrets = { new Microsoft.AspNetCore.DataProtection.Secret("secret".Sha256()) },
+                    ApiSecrets = { new IdentityServer4.Models.Secret("secret".Sha256()) },
 
                     Scopes = { "resource1.scope1", "shared.scope" }
                 },
 
                 new ApiResource("https://www.example.com/", "Resource 3")
                 {
-                    ApiSecrets = { new Microsoft.AspNetCore.DataProtection.Secret("secret".Sha256()) },
+                    ApiSecrets = { new IdentityServer4.Models.Secret("secret".Sha256()) },
 
                     Scopes = { "resource3.scope1", "shared.scope" }
                 },
@@ -72,7 +72,7 @@ namespace IdentityServerHost.Configuration
                 {
                     ApiSecrets =
                     {
-                        new Microsoft.AspNetCore.DataProtection.Secret("secret".Sha256())
+                        new IdentityServer4.Models.Secret("secret".Sha256())
                     },
 
                     // additional claims to put into access token
