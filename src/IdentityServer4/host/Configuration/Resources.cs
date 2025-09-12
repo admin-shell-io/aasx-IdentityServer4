@@ -4,6 +4,7 @@
 
 using IdentityModel;
 using IdentityServer4.Models;
+using Microsoft.AspNetCore.DataProtection;
 using System.Collections.Generic;
 using static IdentityServer4.IdentityServerConstants;
 
@@ -33,7 +34,8 @@ namespace IdentityServerHost.Configuration
 
                 // resource specific scopes
                 new ApiScope("resource1.scope1"),
-                new ApiScope("resource2.scope1"), 
+                new ApiScope("resource2.scope1"),
+                new ApiScope("resource3.scope1"), 
                 
                 // a scope without resource association
                 new ApiScope("scope3"),
@@ -58,7 +60,14 @@ namespace IdentityServerHost.Configuration
 
                     Scopes = { "resource1.scope1", "shared.scope" }
                 },
-                
+
+                new ApiResource("https://www.example.com/", "Resource 3")
+                {
+                    ApiSecrets = { new Secret("secret".Sha256()) },
+
+                    Scopes = { "resource3.scope1", "shared.scope" }
+                },
+
                 new ApiResource("resource2", "Resource 2")
                 {
                     ApiSecrets =
