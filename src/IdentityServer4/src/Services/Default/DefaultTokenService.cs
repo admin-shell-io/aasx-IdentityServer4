@@ -254,7 +254,9 @@ namespace IdentityServer4.Services
 
                         if (x5c != null)
                         {
-                            claims.Add(new Claim("certificate", x5c[0]));
+                            // Do not add certificate for the moment
+                            // Only needed for usage policies demo
+                            // claims.Add(new Claim("certificate", x5c[0]));
                         }
                     }
                 }
