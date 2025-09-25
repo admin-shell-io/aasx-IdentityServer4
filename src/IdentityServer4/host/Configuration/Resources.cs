@@ -35,7 +35,7 @@ namespace IdentityServerHost.Configuration
                 // resource specific scopes
                 new ApiScope("resource1.scope1"),
                 new ApiScope("resource2.scope1"),
-                new ApiScope("resource3.scope1"), 
+                new ApiScope("factory-x"), 
                 
                 // a scope without resource association
                 new ApiScope("scope3"),
@@ -54,18 +54,25 @@ namespace IdentityServerHost.Configuration
         public static readonly IEnumerable<ApiResource> ApiResources = 
             new[]
             {
+                new ApiResource("https://aasx-server-p5.dev.pxcio.net/", "Resource FX1")
+                {
+                    ApiSecrets = { new IdentityServer4.Models.Secret("secret".Sha256()) },
+
+                    Scopes = { "factory-x", "shared.scope" }
+                },
+
+                new ApiResource("https://big.aas-voyager.com/", "Resource FX2")
+                {
+                    ApiSecrets = { new IdentityServer4.Models.Secret("secret".Sha256()) },
+
+                    Scopes = { "factory-x", "shared.scope" }
+                },
+
                 new ApiResource("resource1", "Resource 1")
                 {
                     ApiSecrets = { new IdentityServer4.Models.Secret("secret".Sha256()) },
 
                     Scopes = { "resource1.scope1", "shared.scope" }
-                },
-
-                new ApiResource("https://www.example.com/", "Resource 3")
-                {
-                    ApiSecrets = { new IdentityServer4.Models.Secret("secret".Sha256()) },
-
-                    Scopes = { "resource3.scope1", "shared.scope" }
                 },
 
                 new ApiResource("resource2", "Resource 2")
