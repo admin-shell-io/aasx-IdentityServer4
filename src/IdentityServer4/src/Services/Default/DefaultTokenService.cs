@@ -507,6 +507,13 @@ namespace IdentityServer4.Services
             }
             claims.Add(new Claim("serverName", certName));
 
+            var c = claims.FirstOrDefault(c => c.Type == "userName");
+            if (c != null && c.Value.Contains("@"))
+            {
+                var domain = c.Value.Split("@")[1];
+                claims.Add(new Claim("domain", domain));
+            }
+
             // iat claim as required by JWT profile
             claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.UtcNow.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64));
