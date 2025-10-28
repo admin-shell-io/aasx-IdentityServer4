@@ -19,7 +19,10 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Policy;
+using System.Text;
 using System.Threading.Tasks;
+using static IdentityServer4.Models.IdentityResources;
 
 namespace IdentityServer4.Services
 {
@@ -512,6 +515,19 @@ namespace IdentityServer4.Services
             {
                 var domain = c.Value.Split("@")[1];
                 claims.Add(new Claim("domain", domain));
+            }
+            if (c != null)
+            {
+                var value = c.Value;
+                claims.Add(new Claim("email", value));
+                using (SHA256 mySHA256 = SHA256.Create())
+                {
+                    var valueBytes = Encoding.UTF8.GetBytes(value);
+                    var hash = mySHA256.ComputeHash(valueBytes);
+                    var sub = BitConverter.ToString(hash).Replace("-", "").ToLower();
+                    claims.Add(new Claim("sub", sub));
+                }
+                claims.Add(new Claim("typ", "authflow"));
             }
 
             // iat claim as required by JWT profile
