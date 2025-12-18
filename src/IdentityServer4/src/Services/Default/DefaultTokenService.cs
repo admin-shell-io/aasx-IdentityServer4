@@ -230,6 +230,7 @@ namespace IdentityServer4.Services
             if (issClaim != null && issClaim.Any())
             {
                 iss = issClaim.First().Value;
+                claims.Add(new Claim("client_id", iss));
             }
 
             if (!string.IsNullOrEmpty(iss) && iss.StartsWith("https://login.microsoftonline.com"))
